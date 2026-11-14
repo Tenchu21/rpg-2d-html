@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dungeon of Ember</title>
+  <style>
+    :root {
+      --bg: #0f1220;
+      --panel: rgba(12, 18, 35, 0.82);
+      --line: rgba(255,255,255,0.18);
+      --text: #e9eefc;
+      --accent: #ffd166;
+      --danger: #ff5d73;
+      --success: #70e000;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+      overflow: hidden;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+    }
+
+    #gameWrap {
+      position: relative;
+      width: 960px;
+      height: 540px;
+      border: 2px solid var(--line);
+      background: #111827;
+      box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: #1e2b35;
+    }
+
+    .hint {
+      position: absolute;
+      right: 12px;
+      bottom: 12px;
+      background: rgba(0,0,0,0.45);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      color: #cfe1ff;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="gameWrap">
+    <canvas id="game" width="960" height="540"></canvas>
+    <div class="hint">WASD / Setas = mover • Espaço = atacar • E = interagir</div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const tile = 32;
+    const cols = 20;
+    const rows = 15;
+    const worldWidth = cols * tile;
+    const worldHeight = rows * tile;
+
+    const keys = {};
+    const world = [];
+    let cameraX = 0;
+    let cameraY = 0;
+    let message = "Aventure-se na vila...";
+    let messageTimer = 3;
+
+    const player = {
+      x: 2 * tile + 8,
+      y: 2 * tile + 8,
+      w: 22,
+      h: 22,
+      speed: 150,
+      hp: 100,
+      maxHp: 100,
+      attack: 12,
+      level: 1,
+      xp: 0,
+      toNext: 40,
+      attackCooldown: 0,
+      lastHit: 0
+    };
+
+    const npc = {
+      x: 15 * tile + 8,
+      y: 3 * tile + 8,
+      w: 22,
+      h: 22,
+      name: "Mira"
+    };
+
+    let enemies = [];
+    const quest = {
+      started: false,
+      crystals: 0,
+      needed: 3,
+      complete: false
+    };
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(value, max));
+    }
+
+    function generateWorld() {
+      for (let y = 0; y < rows; y++) {
+        const row = [];
+        for (let x = 0; x < cols; x++) {
+          row.push(0);
+        }
+        world.push(row);
+      }
+
+      for (let x = 0; x < cols; x++) {
+        world[0][x] = 1;
+        world[rows - 1][x] = 1;
+      }
+      for (let y = 0; y < rows; y++) {
+        world[y][0] = 1;
+        world[y][cols - 1] = 1;
+      }
+
+      const blocks = [
+        [5, 3, 4, 3],
+        [12, 6, 4, 3],
+        [7, 9, 5, 2],
+        [2, 10, 3, 2],
+        [15, 10, 3, 2]
+      ];
+
+      for (const [x, y, w, h] of blocks) {
+        for (let yy = y; yy < y + h; yy++) {
+          for (let xx = x; xx < x + w; xx++) {
+            if (xx > 0 && xx < cols - 1 && yy > 0 && yy < rows - 1) {
+              world[yy][xx] = 1;
+            }
+          }
+        }
+      }
+    }
+
+    function spawnEnemies() {
+      const positions = [
+        { x: 9 * tile + 8, y: 11 * tile + 8, kind: "slime" },
+        { x: 13 * tile + 8, y: 12 * tile + 8, kind: "slime" },
+        { x: 5 * tile + 8, y: 11 * tile + 8, kind: "slime" },
+        { x: 10 * tile + 8, y: 4 * tile + 8, kind: "wisp" }
+      ];
+
+      enemies = positions.map((p, index) => ({
+        x: p.x,
+        y: p.y,
+        w: 22,
+        h: 22,
+        kind: p.kind,
+        hp: p.kind === "slime" ? 32 : 48,
+        maxHp: p.kind === "slime" ? 32 : 48,
+        damage: p.kind === "slime" ? 8 : 12,
+        speed: p.kind === "slime" ? 65 : 80,
+        dirX: (index % 2 === 0 ? 1 : -1) * 0.7,
+        dirY: (index % 3 === 0 ? 1 : -1) * 0.7,
+        wanderTimer: 1.5 + Math.random() * 2,
+        attackCooldown: 0
+      }));
+    }
+
+    function rectBlocked(x, y, w, h) {
+      const points = [
+        { x: x + 2, y: y + 2 },
+        { x: x + w - 2, y: y + 2 },
+        { x: x + 2, y: y + h - 2 },
+        { x: x + w - 2, y: y + h - 2 }
+      ];
+
+      return points.some((p) => {
+        const tx = Math.floor(p.x / tile);
+        const ty = Math.floor(p.y / tile);
+        if (tx < 0 || ty < 0 || tx >= cols || ty >= rows) return true;
+        return world[ty][tx] === 1;
+      });
+    }
+
+    function moveEntity(entity, dx, dy, dt) {
+      const nx = entity.x + dx * dt;
+      const ny = entity.y + dy * dt;
+
+      if (!rectBlocked(nx, entity.y, entity.w, entity.h)) {
+        entity.x = nx;
+      }
+      if (!rectBlocked(entity.x, ny, entity.w, entity.h)) {
+        entity.y = ny;
+      }
+    }
+
+    function dist(a, b) {
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    }
+
+    function setMessage(text, time = 2.5) {
+      message = text;
+      messageTimer = time;
+    }
+
+    function attack() {
+      if (player.attackCooldown > 0) return;
+
+      const centerX = player.x + player.w / 2;
+      const centerY = player.y + player.h / 2;
+
+      let target = null;
+      let targetDist = Infinity;
+
+      for (const enemy of enemies) {
+        if (enemy.hp <= 0) continue;
+        const ex = enemy.x + enemy.w / 2;
+        const ey = enemy.y + enemy.h / 2;
+        const d = Math.hypot(centerX - ex, centerY - ey);
+        if (d < 60 && d < targetDist) {
+          target = enemy;
+          targetDist = d;
+        }
+      }
+
+      if (!target) {
+        setMessage("Nenhum inimigo próximo.", 1.4);
+        return;
+      }
+
+      player.attackCooldown = 0.45;
+      target.hp -= player.attack;
+
+      if (target.hp <= 0) {
+        const gainedXP = target.kind === "slime" ? 15 : 22;
+        const crystalGain = target.kind === "slime" ? 1 : 0;
+
+        player.xp += gainedXP;
+
+        if (crystalGain && quest.started) {
+          quest.crystals += crystalGain;
+          if (quest.crystals > quest.needed) quest.crystals = quest.needed;
+        }
+
+        setMessage(`Você derrotou o ${target.kind}! +${gainedXP} XP`, 2.2);
+
+        if (player.xp >= player.toNext) {
+          player.level += 1;
+          player.xp -= player.toNext;
+          player.toNext = Math.floor(player.toNext * 1.5);
+          player.attack += 4;
+          player.maxHp += 12;
+          player.hp = player.maxHp;
+          setMessage(`Nível ${player.level}! Ataque e vida aumentados!`, 2.6);
+        }
+
+        target.hp = 0;
+        enemies = enemies.filter((e) => e.hp > 0);
+      } else {
+        setMessage(`Acertou o ${target.kind} por ${player.attack} de dano!`, 1.2);
+      }
+    }
+
+    function interact() {
+      const d = Math.hypot(player.x - npc.x, player.y - npc.y);
+
+      if (d > 48) {
+        setMessage("Você está muito longe da NPC.", 1.5);
+        return;
+      }
+
+      if (!quest.started) {
+        quest.started = true;
+        setMessage("Mira: Derrote 3 slimes para eu te recompensar!", 3.5);
+        return;
+      }
+
+      if (!quest.complete && quest.crystals >= quest.needed) {
+        quest.complete = true;
+        player.attack += 6;
+        player.maxHp += 20;
+        player.hp = player.maxHp;
+        setMessage("Mira: Excelente! Aqui está sua recompensa: Lâmina do Fogo!", 4.0);
+        return;
+      }
+
+      if (quest.complete) {
+        setMessage("Mira: Você já recebeu a recompensa. Continue explorando!", 2.2);
+        return;
+      }
+
+      setMessage(`Mira: Faltam ${quest.needed - quest.crystals} cristal(is).`, 2.2);
+    }
+
+    function updatePlayer(dt) {
+      let moveX = 0;
+      let moveY = 0;
+
+      if (keys["KeyW"] || keys["ArrowUp"]) moveY -= 1;
+      if (keys["KeyS"] || keys["ArrowDown"]) moveY += 1;
+      if (keys["KeyA"] || keys["ArrowLeft"]) moveX -= 1;
+      if (keys["KeyD"] || keys["ArrowRight"]) moveX += 1;
+
+      if (moveX !== 0 || moveY !== 0) {
+        const length = Math.hypot(moveX, moveY) || 1;
+        moveX /= length;
+        moveY /= length;
+      }
+
+      const step = player.speed * dt;
+      moveEntity(player, moveX * step, moveY * step, 1);
+
+      player.x = clamp(player.x, 0, worldWidth - player.w);
+      player.y = clamp(player.y, 0, worldHeight - player.h);
+
+      player.attackCooldown = Math.max(0, player.attackCooldown - dt);
+    }
+
+    function updateEnemies(dt) {
+      for (const enemy of enemies) {
+        enemy.attackCooldown = Math.max(0, enemy.attackCooldown - dt);
+        enemy.wanderTimer -= dt;
+
+        const playerCenterX = player.x + player.w / 2;
+        const playerCenterY = player.y + player.h / 2;
+        const enemyCenterX = enemy.x + enemy.w / 2;
+        const enemyCenterY = enemy.y + enemy.h / 2;
+
+        const d = Math.hypot(playerCenterX - enemyCenterX, playerCenterY - enemyCenterY);
+
+        let moveX = 0;
+        let moveY = 0;
+
+        if (d < 180) {
+          moveX = Math.sign(playerCenterX - enemyCenterX);
+          moveY = Math.sign(playerCenterY - enemyCenterY);
+        } else if (enemy.wanderTimer <= 0) {
+          enemy.dirX = (Math.random() - 0.5) * 2;
+          enemy.dirY = (Math.random() - 0.5) * 2;
+          enemy.wanderTimer = 1.2 + Math.random() * 2;
+        }
+
+        if (d < 180) {
+          const len = Math.hypot(moveX, moveY) || 1;
+          moveX /= len;
+          moveY /= len;
+        } else {
+          moveX = enemy.dirX;
+          moveY = enemy.dirY;
+          const len = Math.hypot(moveX, moveY) || 1;
+          moveX /= len;
+          moveY /= len;
+        }
+
+        const stepX = moveX * enemy.speed * dt;
+        const stepY = moveY * enemy.speed * dt;
+        moveEntity(enemy, stepX, stepY, 1);
+
+        if (d < 30 && enemy.attackCooldown <= 0) {
+          player.hp -= enemy.damage;
+          enemy.attackCooldown = 1.1;
+          setMessage(`${enemy.kind.toUpperCase()} te atacou por ${enemy.damage}!`, 1.2);
+          if (player.hp <= 0) {
+            player.hp = player.maxHp;
+            player.x = 2 * tile + 8;
+            player.y = 2 * tile + 8;
+            player.xp = 0;
+            setMessage("Você morreu e voltou ao ponto de partida.", 3);
+          }
+        }
+      }
+    }
+
+    function drawWorld() {
+      const startX = Math.floor(cameraX / tile);
+      const endX = Math.ceil((cameraX + canvas.width) / tile);
+      const startY = Math.floor(cameraY / tile);
+      const endY = Math.ceil((cameraY + canvas.height) / tile);
+
+      for (let y = startY; y <= endY; y++) {
+        for (let x = startX; x <= endX; x++) {
+          if (x < 0 || y < 0 || x >= cols || y >= rows) continue;
+
+          const sx = x * tile - cameraX;
+          const sy = y * tile - cameraY;
+
+          if (world[y][x] === 0) {
+            ctx.fillStyle = "#3d8b59";
+            ctx.fillRect(sx, sy, tile, tile);
+
+            ctx.fillStyle = "rgba(255,255,255,0.04)";
+            for (let i = 0; i < 3; i++) {
+              ctx.fillRect(sx + 5 + i * 9, sy + 8 + (i % 2) * 7, 4, 4);
+            }
+          } else {
+            ctx.fillStyle = "#5c4a34";
+            ctx.fillRect(sx, sy, tile, tile);
+
+            ctx.fillStyle = "#7d613b";
+            ctx.fillRect(sx + 6, sy + 10, 20, 18);
+
+            ctx.fillStyle = "#3f7d2d";
+            ctx.beginPath();
+            ctx.arc(sx + 16, sy + 10, 10, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+    }
+
+    function drawNPC() {
+      const sx = npc.x - cameraX;
+      const sy = npc.y - cameraY;
+
+      ctx.fillStyle = "#6db2ff";
+      ctx.fillRect(sx, sy, npc.w, npc.h);
+
+      ctx.fillStyle = "#f4d6a0";
+      ctx.fillRect(sx + 7, sy - 6, 8, 8);
+
+      ctx.fillStyle = "#1a2140";
+      ctx.fillRect(sx + 3, sy + 18, 6, 8);
+      ctx.fillRect(sx + 13, sy + 18, 6, 8);
+    }
+
+    function drawEnemies() {
+      for (const enemy of enemies) {
+        const sx = enemy.x - cameraX;
+        const sy = enemy.y - cameraY;
+
+        ctx.fillStyle = enemy.kind === "slime" ? "#7ce38b" : "#d98cff";
+        ctx.fillRect(sx, sy, enemy.w, enemy.h);
+
+        const hpW = enemy.w;
+        ctx.fillStyle = "rgba(0,0,0,0.4)";
+        ctx.fillRect(sx, sy - 8, hpW, 5);
+        ctx.fillStyle = "#ff4d4d";
+        ctx.fillRect(sx, sy - 8, (enemy.hp / enemy.maxHp) * hpW, 5);
+      }
+    }
+
+    function drawPlayer() {
+      const sx = player.x - cameraX;
+      const sy = player.y - cameraY;
+
+      ctx.fillStyle = "#ffd166";
+      ctx.fillRect(sx, sy, player.w, player.h);
+
+      ctx.fillStyle = "#1e3a8a";
+      ctx.fillRect(sx + 6, sy - 6, 10, 10);
+
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(sx + 9, sy + 18, 4, 8);
+      ctx.fillRect(sx + 2, sy + 8, 4, 8);
+      ctx.fillRect(sx + 16, sy + 8, 4, 8);
+    }
+
+    function drawHud() {
+      ctx.fillStyle = "rgba(12, 18, 35, 0.8)";
+      ctx.fillRect(18, 18, 200, 26);
+      ctx.fillStyle = "#7ae582";
+      ctx.fillRect(22, 22, (player.hp / player.maxHp) * 192, 18);
+
+      ctx.fillStyle = "rgba(12, 18, 35, 0.8)";
+      ctx.fillRect(18, 52, 200, 18);
+      ctx.fillStyle = "#50a3ff";
+      ctx.fillRect(22, 55, (player.xp / player.toNext) * 192, 12);
+
+      ctx.fillStyle = "#f2f5ff";
+      ctx.font = "bold 15px Arial";
+      ctx.fillText(`HP: ${player.hp}/${player.maxHp}`, 22, 38);
+      ctx.fillText(`Nível ${player.level}`, 18, 80);
+
+      ctx.fillStyle = "rgba(12, 18, 35, 0.82)";
+      ctx.fillRect(canvas.width - 260, 18, 232, 116);
+
+      ctx.fillStyle = "#ffd166";
+      ctx.font = "bold 15px Arial";
+      ctx.fillText("MISSÃO", canvas.width - 240, 40);
+
+      ctx.fillStyle = "#edf6ff";
+      ctx.font = "14px Arial";
+      const questText = quest.complete
+        ? "Objetivo concluído!"
+        : quest.started
+          ? `Crystals: ${quest.crystals}/${quest.needed}`
+          : "Fale com Mira";
+      ctx.fillText(questText, canvas.width - 240, 62);
+
+      ctx.fillStyle = "#9ae6b4";
+      ctx.fillText("E = interagir", canvas.width - 240, 86);
+      ctx.fillStyle = "#f8d57e";
+      ctx.fillText("Espaço = atacar", canvas.width - 240, 106);
+
+      ctx.fillStyle = "rgba(0, 0, 0, 0.46)";
+      ctx.fillRect(250, canvas.height - 52, canvas.width - 500, 30);
+      ctx.fillStyle = "#f5f7ff";
+      ctx.font = "16px Arial";
+      ctx.fillText(message, 265, canvas.height - 31);
+    }
+
+    function updateCamera() {
+      cameraX = clamp(player.x - canvas.width / 2 + player.w / 2, 0, worldWidth - canvas.width);
+      cameraY = clamp(player.y - canvas.height / 2 + player.h / 2, 0, worldHeight - canvas.height);
+    }
+
+    function update(dt) {
+      updatePlayer(dt);
+      updateEnemies(dt);
+      updateCamera();
+
+      if (messageTimer > 0) {
+        messageTimer -= dt;
+      }
+      if (messageTimer <= 0 && message !== "Aventure-se na vila...") {
+        message = "Aventure-se na vila...";
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawWorld();
+      drawNPC();
+      drawEnemies();
+      drawPlayer();
+      drawHud();
+    }
+
+    function gameLoop(ts) {
+      if (!gameLoop.last) gameLoop.last = ts;
+      const dt = Math.min((ts - gameLoop.last) / 1000, 0.033);
+      gameLoop.last = ts;
+
+      update(dt);
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    document.addEventListener("keydown", (e) => {
+      keys[e.code] = true;
+      if (e.code === "Space") attack();
+      if (e.code === "KeyE") interact();
+    });
+
+    document.addEventListener("keyup", (e) => {
+      keys[e.code] = false;
+    });
+
+    generateWorld();
+    spawnEnemies();
+    setMessage("Aventure-se na vila...", 999);
+    requestAnimationFrame(gameLoop);
+  </script>
+</body>
+</html>
