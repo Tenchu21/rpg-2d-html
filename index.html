@@ -5,579 +5,152 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dungeon of Ember</title>
   <style>
-    :root {
-      --bg: #0f1220;
-      --panel: rgba(12, 18, 35, 0.82);
-      --line: rgba(255,255,255,0.18);
-      --text: #e9eefc;
-      --accent: #ffd166;
-      --danger: #ff5d73;
-      --success: #70e000;
-    }
-
+    :root { color-scheme: dark; --text: #e9eefc; --accent: #ffd166; --panel: rgba(12,18,35,.96); }
     * { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: Arial, Helvetica, sans-serif;
-      overflow: hidden;
-    }
+    html, body { margin: 0; min-height: 100%; background: #0f1220; color: var(--text); font-family: Arial, sans-serif; }
+    body { min-height: 100vh; display: grid; place-items: center; overflow: hidden; }
+    #gameWrap { position: relative; width: min(960px, 100vw); height: min(540px, 100vh); overflow: hidden; border: 2px solid rgba(255,255,255,.2); background: #1e2b35; box-shadow: 0 0 40px #0008; }
+    canvas { display: block; width: 100%; height: 100%; }
+    .hint { position: absolute; z-index: 2; top: 12px; left: 50%; transform: translateX(-50%); padding: 8px 12px; border-radius: 8px; background: #080d1bcc; font-size: 12px; text-align: center; pointer-events: none; }
 
-    body { display: grid; place-items: center; }
-
-    #gameWrap {
-      position: relative;
-      width: min(960px, 100vw);
-      height: min(540px, 100vh);
-      aspect-ratio: 16 / 9;
-      border: 2px solid var(--line);
-      background: #111827;
-      box-shadow: 0 0 40px rgba(0,0,0,0.5);
-      overflow: hidden;
-    }
-
-    canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-      background: #1e2b35;
-    }
-
-    .hint {
-      position: absolute;
-      right: 12px;
-      bottom: 76px;
-      z-index: 2;
-      background: rgba(0,0,0,0.45);
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      padding: 8px 10px;
-      font-size: 12px;
-      letter-spacing: 0.04em;
-      color: #cfe1ff;
-      pointer-events: none;
-    }
-
-    .game-menu {
-      position: absolute;
-      z-index: 5;
-      bottom: 14px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 8px;
-      padding: 8px;
-      border: 1px solid rgba(255, 209, 102, 0.45);
-      border-radius: 16px;
-      background: rgba(12, 18, 35, 0.92);
-      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
-      backdrop-filter: blur(8px);
-    }
-
-    .menu-button {
-      min-width: 92px;
-      padding: 9px 12px;
-      border: 1px solid transparent;
-      border-radius: 10px;
-      background: transparent;
-      color: var(--text);
-      font: 600 13px Arial, sans-serif;
-      cursor: pointer;
-      transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
-    }
-
-    .menu-button:hover,
-    .menu-button[aria-expanded="true"] {
-      background: rgba(255, 209, 102, 0.15);
-      border-color: rgba(255, 209, 102, 0.5);
-      color: var(--accent);
-      transform: translateY(-2px);
-    }
-
-    .menu-button:focus-visible,
-    .panel-close:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 2px;
-    }
-
+    /* A barra fica fixa à janela, fora da área de desenho do canvas. */
+    .game-menu { position: fixed !important; z-index: 2147483000 !important; left: 50% !important; bottom: max(14px, env(safe-area-inset-bottom)) !important; transform: translateX(-50%) !important; display: flex !important; visibility: visible !important; opacity: 1 !important; gap: 8px; width: max-content; max-width: calc(100vw - 20px); padding: 8px; border: 1px solid #ffd16699; border-radius: 16px; background: rgba(12,18,35,.97); box-shadow: 0 8px 28px #0009; }
+    .menu-button { min-width: 92px; padding: 8px 12px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: var(--text); font: 600 13px Arial,sans-serif; cursor: pointer; }
+    .menu-button:hover, .menu-button[aria-expanded="true"] { background: #ffd16626; border-color: #ffd16680; color: var(--accent); }
     .menu-icon { display: block; margin-bottom: 4px; font-size: 18px; }
-
-    .menu-panel {
-      position: absolute;
-      z-index: 4;
-      left: 50%;
-      bottom: 82px;
-      transform: translateX(-50%);
-      width: min(340px, calc(100% - 24px));
-      padding: 18px;
-      border: 1px solid rgba(255, 209, 102, 0.42);
-      border-radius: 14px;
-      background: rgba(12, 18, 35, 0.96);
-      box-shadow: 0 12px 32px rgba(0,0,0,0.5);
-    }
-
-    .menu-panel[hidden] { display: none; }
-    .menu-panel h2 { margin: 0 34px 12px 0; color: var(--accent); font-size: 18px; }
-    .menu-panel p { margin: 8px 0; color: #e9eefc; font-size: 14px; line-height: 1.45; }
+    .menu-panel { position: fixed !important; z-index: 2147483001 !important; left: 50% !important; bottom: 88px !important; transform: translateX(-50%) !important; width: min(340px, calc(100vw - 24px)); padding: 18px; border: 1px solid #ffd16680; border-radius: 14px; background: var(--panel); box-shadow: 0 12px 32px #000b; }
+    .menu-panel[hidden] { display: none !important; }
+    .menu-panel h2 { margin: 0 36px 12px 0; color: var(--accent); font-size: 18px; }
+    .menu-panel p { margin: 8px 0; font-size: 14px; line-height: 1.45; }
     .menu-panel .muted { color: #aebbd2; }
-    .panel-close {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      width: 30px;
-      height: 30px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: rgba(255,255,255,0.06);
-      color: var(--text);
-      font-size: 18px;
-      cursor: pointer;
-    }
-
-    @media (max-width: 540px) {
-      .game-menu { bottom: 8px; gap: 2px; padding: 5px; width: calc(100% - 16px); justify-content: space-around; }
-      .menu-button { min-width: 0; flex: 1; padding: 7px 3px; font-size: 11px; }
-      .menu-icon { font-size: 16px; }
-      .hint { right: 6px; bottom: 68px; padding: 6px; font-size: 10px; }
-      .menu-panel { bottom: 70px; }
-    }
+    .panel-close { position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; border: 1px solid #ffffff44; border-radius: 8px; background: #ffffff10; color: var(--text); font-size: 18px; cursor: pointer; }
+    @media (max-width: 500px) { .game-menu { gap: 2px; padding: 5px; width: calc(100vw - 16px); justify-content: space-around; } .menu-button { min-width: 0; flex: 1; padding: 7px 3px; font-size: 11px; } .menu-icon { font-size: 16px; } .menu-panel { bottom: 78px !important; } .hint { top: 6px; font-size: 10px; } }
   </style>
 </head>
 <body>
-  <div id="gameWrap">
-    <canvas id="game" width="960" height="540"></canvas>
-
+  <main id="gameWrap">
+    <canvas id="game" width="960" height="540" aria-label="Jogo RPG 2D"></canvas>
     <div class="hint">WASD / Setas = mover • Espaço = atacar • E = interagir</div>
+  </main>
 
-    <nav class="game-menu" aria-label="Menu do jogo">
-      <button class="menu-button" type="button" data-panel="items" aria-expanded="false" aria-controls="menuPanel">
-        <span class="menu-icon" aria-hidden="true">🎒</span>Itens
-      </button>
-      <button class="menu-button" type="button" data-panel="status" aria-expanded="false" aria-controls="menuPanel">
-        <span class="menu-icon" aria-hidden="true">🛡️</span>Status
-      </button>
-      <button class="menu-button" type="button" data-panel="options" aria-expanded="false" aria-controls="menuPanel">
-        <span class="menu-icon" aria-hidden="true">⚙️</span>Opções
-      </button>
-      <button class="menu-button" type="button" data-panel="talents" aria-expanded="false" aria-controls="menuPanel">
-        <span class="menu-icon" aria-hidden="true">✨</span>Talentos
-      </button>
-    </nav>
-
-    <section class="menu-panel" id="menuPanel" aria-live="polite" hidden>
-      <button class="panel-close" type="button" aria-label="Fechar painel">×</button>
-      <div id="panelContent"></div>
-    </section>
-  </div>
+  <nav class="game-menu" aria-label="Menu do jogo">
+    <button class="menu-button" type="button" data-panel="items" aria-expanded="false" aria-controls="menuPanel"><span class="menu-icon" aria-hidden="true">🎒</span>Itens</button>
+    <button class="menu-button" type="button" data-panel="status" aria-expanded="false" aria-controls="menuPanel"><span class="menu-icon" aria-hidden="true">🛡️</span>Status</button>
+    <button class="menu-button" type="button" data-panel="options" aria-expanded="false" aria-controls="menuPanel"><span class="menu-icon" aria-hidden="true">⚙️</span>Opções</button>
+    <button class="menu-button" type="button" data-panel="talents" aria-expanded="false" aria-controls="menuPanel"><span class="menu-icon" aria-hidden="true">✨</span>Talentos</button>
+  </nav>
+  <section class="menu-panel" id="menuPanel" aria-live="polite" hidden>
+    <button class="panel-close" type="button" aria-label="Fechar painel">×</button>
+    <div id="panelContent"></div>
+  </section>
 
   <script>
-    const canvas = document.getElementById("game");
-    const ctx = canvas.getContext("2d");
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const player = { x: 100, y: 120, size: 24, hp: 100, maxHp: 100, attack: 12, level: 1, xp: 0 };
+    const keys = Object.create(null);
+    const items = ['Poção de vida'];
+    let message = 'Explore a vila e encontre Mira!';
+    const npc = { x: 760, y: 130 };
+    const enemies = [
+      { x: 680, y: 380, hp: 32, maxHp: 32, kind: 'Slime' },
+      { x: 450, y: 420, hp: 32, maxHp: 32, kind: 'Slime' },
+      { x: 290, y: 350, hp: 32, maxHp: 32, kind: 'Slime' }
+    ];
+    let crystals = 0;
+    let questStarted = false;
+    let questComplete = false;
 
-    const tile = 32;
-    const cols = 20;
-    const rows = 15;
-    const worldWidth = cols * tile;
-    const worldHeight = rows * tile;
-
-    const keys = {};
-    const world = [];
-    let cameraX = 0;
-    let cameraY = 0;
-    let message = "Aventure-se na vila...";
-    let messageTimer = 3;
-
-    const player = {
-      x: 2 * tile + 8,
-      y: 2 * tile + 8,
-      w: 22,
-      h: 22,
-      speed: 150,
-      hp: 100,
-      maxHp: 100,
-      attack: 12,
-      level: 1,
-      xp: 0,
-      toNext: 40,
-      attackCooldown: 0,
-      lastHit: 0
-    };
-
-    const npc = { x: 15 * tile + 8, y: 3 * tile + 8, w: 22, h: 22, name: "Mira" };
-    let enemies = [];
-    const quest = { started: false, crystals: 0, needed: 3, complete: false };
-
-    function clamp(value, min, max) {
-      return Math.max(min, Math.min(value, max));
-    }
-
-    function generateWorld() {
-      for (let y = 0; y < rows; y++) {
-        const row = [];
-        for (let x = 0; x < cols; x++) row.push(0);
-        world.push(row);
+    function draw() {
+      ctx.fillStyle = '#3d8b59'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Grama e caminhos decorativos
+      ctx.fillStyle = '#ffffff10';
+      for (let x = 20; x < canvas.width; x += 48) for (let y = 20; y < canvas.height; y += 46) ctx.fillRect(x, y, 4, 4);
+      ctx.fillStyle = '#947447'; ctx.fillRect(0, 235, canvas.width, 54); ctx.fillRect(705, 0, 55, 300);
+      // NPC
+      ctx.fillStyle = '#6db2ff'; ctx.fillRect(npc.x, npc.y, 26, 30); ctx.fillStyle = '#f4d6a0'; ctx.fillRect(npc.x + 7, npc.y - 9, 12, 12);
+      ctx.fillStyle = '#fff'; ctx.font = '14px Arial'; ctx.fillText('Mira', npc.x - 1, npc.y - 14);
+      // Inimigos
+      for (const enemy of enemies) {
+        ctx.fillStyle = '#7ce38b'; ctx.beginPath(); ctx.arc(enemy.x, enemy.y, 15, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#381b28'; ctx.fillRect(enemy.x - 16, enemy.y - 24, 32, 5);
+        ctx.fillStyle = '#ff4d4d'; ctx.fillRect(enemy.x - 16, enemy.y - 24, 32 * enemy.hp / enemy.maxHp, 5);
       }
-
-      for (let x = 0; x < cols; x++) {
-        world[0][x] = 1;
-        world[rows - 1][x] = 1;
-      }
-      for (let y = 0; y < rows; y++) {
-        world[y][0] = 1;
-        world[y][cols - 1] = 1;
-      }
-
-      const blocks = [[5, 3, 4, 3], [12, 6, 4, 3], [7, 9, 5, 2], [2, 10, 3, 2], [15, 10, 3, 2]];
-      for (const [x, y, w, h] of blocks) {
-        for (let yy = y; yy < y + h; yy++) {
-          for (let xx = x; xx < x + w; xx++) {
-            if (xx > 0 && xx < cols - 1 && yy > 0 && yy < rows - 1) world[yy][xx] = 1;
-          }
-        }
-      }
+      // Jogador
+      ctx.fillStyle = '#1e3a8a'; ctx.fillRect(player.x + 5, player.y - 7, 14, 12);
+      ctx.fillStyle = '#ffd166'; ctx.fillRect(player.x, player.y, player.size, player.size);
+      // HUD
+      ctx.fillStyle = '#0c1223dd'; ctx.fillRect(16, 16, 205, 56);
+      ctx.fillStyle = '#7ae582'; ctx.fillRect(22, 23, 190 * player.hp / player.maxHp, 16);
+      ctx.fillStyle = '#f2f5ff'; ctx.font = 'bold 14px Arial'; ctx.fillText(`HP ${player.hp}/${player.maxHp}  •  Nível ${player.level}`, 22, 59);
+      ctx.fillStyle = '#0c1223dd'; ctx.fillRect(canvas.width - 225, 16, 210, 72);
+      ctx.fillStyle = '#ffd166'; ctx.font = 'bold 14px Arial'; ctx.fillText('MISSÃO', canvas.width - 210, 38);
+      ctx.fillStyle = '#fff'; ctx.font = '13px Arial'; ctx.fillText(questComplete ? 'Concluída!' : questStarted ? `Cristais: ${crystals}/3` : 'Fale com Mira', canvas.width - 210, 60);
+      ctx.fillStyle = '#0c1223dd'; ctx.fillRect(250, canvas.height - 46, 460, 28);
+      ctx.fillStyle = '#fff'; ctx.font = '14px Arial'; ctx.fillText(message, 264, canvas.height - 27);
     }
 
-    function spawnEnemies() {
-      const positions = [
-        { x: 9 * tile + 8, y: 11 * tile + 8, kind: "slime" },
-        { x: 13 * tile + 8, y: 12 * tile + 8, kind: "slime" },
-        { x: 5 * tile + 8, y: 11 * tile + 8, kind: "slime" },
-        { x: 10 * tile + 8, y: 4 * tile + 8, kind: "wisp" }
-      ];
-      enemies = positions.map((p, index) => ({
-        x: p.x, y: p.y, w: 22, h: 22, kind: p.kind,
-        hp: p.kind === "slime" ? 32 : 48,
-        maxHp: p.kind === "slime" ? 32 : 48,
-        damage: p.kind === "slime" ? 8 : 12,
-        speed: p.kind === "slime" ? 65 : 80,
-        dirX: (index % 2 === 0 ? 1 : -1) * 0.7,
-        dirY: (index % 3 === 0 ? 1 : -1) * 0.7,
-        wanderTimer: 1.5 + Math.random() * 2,
-        attackCooldown: 0
-      }));
-    }
-
-    function rectBlocked(x, y, w, h) {
-      const points = [
-        { x: x + 2, y: y + 2 }, { x: x + w - 2, y: y + 2 },
-        { x: x + 2, y: y + h - 2 }, { x: x + w - 2, y: y + h - 2 }
-      ];
-      return points.some((p) => {
-        const tx = Math.floor(p.x / tile);
-        const ty = Math.floor(p.y / tile);
-        if (tx < 0 || ty < 0 || tx >= cols || ty >= rows) return true;
-        return world[ty][tx] === 1;
-      });
-    }
-
-    function moveEntity(entity, dx, dy, dt) {
-      const nx = entity.x + dx * dt;
-      const ny = entity.y + dy * dt;
-      if (!rectBlocked(nx, entity.y, entity.w, entity.h)) entity.x = nx;
-      if (!rectBlocked(entity.x, ny, entity.w, entity.h)) entity.y = ny;
-    }
-
-    function setMessage(text, time = 2.5) {
-      message = text;
-      messageTimer = time;
+    function update() {
+      const speed = 3;
+      if (keys.ArrowUp || keys.KeyW) player.y -= speed;
+      if (keys.ArrowDown || keys.KeyS) player.y += speed;
+      if (keys.ArrowLeft || keys.KeyA) player.x -= speed;
+      if (keys.ArrowRight || keys.KeyD) player.x += speed;
+      player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
+      player.y = Math.max(0, Math.min(canvas.height - player.size, player.y));
+      draw();
+      requestAnimationFrame(update);
     }
 
     function attack() {
-      if (player.attackCooldown > 0) return;
-      const centerX = player.x + player.w / 2;
-      const centerY = player.y + player.h / 2;
-      let target = null;
-      let targetDist = Infinity;
-
-      for (const enemy of enemies) {
-        if (enemy.hp <= 0) continue;
-        const d = Math.hypot(centerX - (enemy.x + enemy.w / 2), centerY - (enemy.y + enemy.h / 2));
-        if (d < 60 && d < targetDist) { target = enemy; targetDist = d; }
-      }
-
-      if (!target) { setMessage("Nenhum inimigo próximo.", 1.4); return; }
-      player.attackCooldown = 0.45;
+      const target = enemies.find(enemy => Math.hypot(player.x - enemy.x, player.y - enemy.y) < 55);
+      if (!target) { message = 'Nenhum inimigo próximo.'; return; }
       target.hp -= player.attack;
-
       if (target.hp <= 0) {
-        const gainedXP = target.kind === "slime" ? 15 : 22;
-        player.xp += gainedXP;
-        if (target.kind === "slime" && quest.started) quest.crystals = Math.min(quest.needed, quest.crystals + 1);
-        setMessage(`Você derrotou o ${target.kind}! +${gainedXP} XP`, 2.2);
-        if (player.xp >= player.toNext) {
-          player.level += 1;
-          player.xp -= player.toNext;
-          player.toNext = Math.floor(player.toNext * 1.5);
-          player.attack += 4;
-          player.maxHp += 12;
-          player.hp = player.maxHp;
-          setMessage(`Nível ${player.level}! Ataque e vida aumentados!`, 2.6);
-        }
-        target.hp = 0;
-        enemies = enemies.filter((e) => e.hp > 0);
-      } else {
-        setMessage(`Acertou o ${target.kind} por ${player.attack} de dano!`, 1.2);
-      }
+        enemies.splice(enemies.indexOf(target), 1);
+        player.xp += 15;
+        if (questStarted && crystals < 3) crystals++;
+        if (player.xp >= 40) { player.xp -= 40; player.level++; player.attack += 4; player.maxHp += 12; player.hp = player.maxHp; }
+        message = `Você derrotou o ${target.kind}! +15 XP`;
+      } else message = `Você acertou o ${target.kind}!`;
     }
 
     function interact() {
-      const d = Math.hypot(player.x - npc.x, player.y - npc.y);
-      if (d > 48) { setMessage("Você está muito longe da NPC.", 1.5); return; }
-      if (!quest.started) {
-        quest.started = true;
-        setMessage("Mira: Derrote 3 slimes para eu te recompensar!", 3.5);
-        return;
-      }
-      if (!quest.complete && quest.crystals >= quest.needed) {
-        quest.complete = true;
-        player.attack += 6;
-        player.maxHp += 20;
-        player.hp = player.maxHp;
-        setMessage("Mira: Excelente! Aqui está sua recompensa: Lâmina do Fogo!", 4);
-        return;
-      }
-      if (quest.complete) { setMessage("Mira: Você já recebeu a recompensa. Continue explorando!", 2.2); return; }
-      setMessage(`Mira: Faltam ${quest.needed - quest.crystals} cristal(is).`, 2.2);
+      if (Math.hypot(player.x - npc.x, player.y - npc.y) > 60) { message = 'Chegue mais perto de Mira para conversar.'; return; }
+      if (!questStarted) { questStarted = true; message = 'Mira: Derrote 3 slimes para receber uma recompensa!'; }
+      else if (crystals >= 3 && !questComplete) { questComplete = true; player.attack += 6; items.push('Lâmina do Fogo'); message = 'Missão concluída! Você ganhou a Lâmina do Fogo.'; }
+      else if (questComplete) message = 'Mira: Obrigada pela ajuda, aventureiro!';
+      else message = `Mira: Ainda faltam ${3 - crystals} cristais.`;
     }
 
-    function updatePlayer(dt) {
-      let moveX = 0;
-      let moveY = 0;
-      if (keys["KeyW"] || keys["ArrowUp"]) moveY -= 1;
-      if (keys["KeyS"] || keys["ArrowDown"]) moveY += 1;
-      if (keys["KeyA"] || keys["ArrowLeft"]) moveX -= 1;
-      if (keys["KeyD"] || keys["ArrowRight"]) moveX += 1;
-      if (moveX !== 0 || moveY !== 0) {
-        const length = Math.hypot(moveX, moveY) || 1;
-        moveX /= length;
-        moveY /= length;
-      }
-      const step = player.speed * dt;
-      moveEntity(player, moveX * step, moveY * step, 1);
-      player.x = clamp(player.x, 0, worldWidth - player.w);
-      player.y = clamp(player.y, 0, worldHeight - player.h);
-      player.attackCooldown = Math.max(0, player.attackCooldown - dt);
-    }
-
-    function updateEnemies(dt) {
-      for (const enemy of enemies) {
-        enemy.attackCooldown = Math.max(0, enemy.attackCooldown - dt);
-        enemy.wanderTimer -= dt;
-        const px = player.x + player.w / 2;
-        const py = player.y + player.h / 2;
-        const ex = enemy.x + enemy.w / 2;
-        const ey = enemy.y + enemy.h / 2;
-        const d = Math.hypot(px - ex, py - ey);
-        let moveX = 0;
-        let moveY = 0;
-        if (d < 180) {
-          moveX = Math.sign(px - ex);
-          moveY = Math.sign(py - ey);
-        } else if (enemy.wanderTimer <= 0) {
-          enemy.dirX = (Math.random() - 0.5) * 2;
-          enemy.dirY = (Math.random() - 0.5) * 2;
-          enemy.wanderTimer = 1.2 + Math.random() * 2;
-        }
-        if (d >= 180) { moveX = enemy.dirX; moveY = enemy.dirY; }
-        const len = Math.hypot(moveX, moveY) || 1;
-        moveEntity(enemy, (moveX / len) * enemy.speed * dt, (moveY / len) * enemy.speed * dt, 1);
-        if (d < 30 && enemy.attackCooldown <= 0) {
-          player.hp -= enemy.damage;
-          enemy.attackCooldown = 1.1;
-          setMessage(`${enemy.kind.toUpperCase()} te atacou por ${enemy.damage}!`, 1.2);
-          if (player.hp <= 0) {
-            player.hp = player.maxHp;
-            player.x = 2 * tile + 8;
-            player.y = 2 * tile + 8;
-            player.xp = 0;
-            setMessage("Você morreu e voltou ao ponto de partida.", 3);
-          }
-        }
-      }
-    }
-
-    function drawWorld() {
-      const startX = Math.floor(cameraX / tile);
-      const endX = Math.ceil((cameraX + canvas.width) / tile);
-      const startY = Math.floor(cameraY / tile);
-      const endY = Math.ceil((cameraY + canvas.height) / tile);
-      for (let y = startY; y <= endY; y++) {
-        for (let x = startX; x <= endX; x++) {
-          if (x < 0 || y < 0 || x >= cols || y >= rows) continue;
-          const sx = x * tile - cameraX;
-          const sy = y * tile - cameraY;
-          if (world[y][x] === 0) {
-            ctx.fillStyle = "#3d8b59";
-            ctx.fillRect(sx, sy, tile, tile);
-            ctx.fillStyle = "rgba(255,255,255,0.04)";
-            for (let i = 0; i < 3; i++) ctx.fillRect(sx + 5 + i * 9, sy + 8 + (i % 2) * 7, 4, 4);
-          } else {
-            ctx.fillStyle = "#5c4a34";
-            ctx.fillRect(sx, sy, tile, tile);
-            ctx.fillStyle = "#7d613b";
-            ctx.fillRect(sx + 6, sy + 10, 20, 18);
-            ctx.fillStyle = "#3f7d2d";
-            ctx.beginPath();
-            ctx.arc(sx + 16, sy + 10, 10, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        }
-      }
-    }
-
-    function drawNPC() {
-      const sx = npc.x - cameraX;
-      const sy = npc.y - cameraY;
-      ctx.fillStyle = "#6db2ff";
-      ctx.fillRect(sx, sy, npc.w, npc.h);
-      ctx.fillStyle = "#f4d6a0";
-      ctx.fillRect(sx + 7, sy - 6, 8, 8);
-      ctx.fillStyle = "#1a2140";
-      ctx.fillRect(sx + 3, sy + 18, 6, 8);
-      ctx.fillRect(sx + 13, sy + 18, 6, 8);
-    }
-
-    function drawEnemies() {
-      for (const enemy of enemies) {
-        const sx = enemy.x - cameraX;
-        const sy = enemy.y - cameraY;
-        ctx.fillStyle = enemy.kind === "slime" ? "#7ce38b" : "#d98cff";
-        ctx.fillRect(sx, sy, enemy.w, enemy.h);
-        ctx.fillStyle = "rgba(0,0,0,0.4)";
-        ctx.fillRect(sx, sy - 8, enemy.w, 5);
-        ctx.fillStyle = "#ff4d4d";
-        ctx.fillRect(sx, sy - 8, (enemy.hp / enemy.maxHp) * enemy.w, 5);
-      }
-    }
-
-    function drawPlayer() {
-      const sx = player.x - cameraX;
-      const sy = player.y - cameraY;
-      ctx.fillStyle = "#ffd166";
-      ctx.fillRect(sx, sy, player.w, player.h);
-      ctx.fillStyle = "#1e3a8a";
-      ctx.fillRect(sx + 6, sy - 6, 10, 10);
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(sx + 9, sy + 18, 4, 8);
-      ctx.fillRect(sx + 2, sy + 8, 4, 8);
-      ctx.fillRect(sx + 16, sy + 8, 4, 8);
-    }
-
-    function drawHud() {
-      ctx.fillStyle = "rgba(12, 18, 35, 0.8)";
-      ctx.fillRect(18, 18, 200, 26);
-      ctx.fillStyle = "#7ae582";
-      ctx.fillRect(22, 22, (player.hp / player.maxHp) * 192, 18);
-      ctx.fillStyle = "rgba(12, 18, 35, 0.8)";
-      ctx.fillRect(18, 52, 200, 18);
-      ctx.fillStyle = "#50a3ff";
-      ctx.fillRect(22, 55, (player.xp / player.toNext) * 192, 12);
-      ctx.fillStyle = "#f2f5ff";
-      ctx.font = "bold 15px Arial";
-      ctx.fillText(`HP: ${player.hp}/${player.maxHp}`, 22, 38);
-      ctx.fillText(`Nível ${player.level}`, 18, 80);
-      ctx.fillStyle = "rgba(12, 18, 35, 0.82)";
-      ctx.fillRect(canvas.width - 260, 18, 232, 116);
-      ctx.fillStyle = "#ffd166";
-      ctx.font = "bold 15px Arial";
-      ctx.fillText("MISSÃO", canvas.width - 240, 40);
-      ctx.fillStyle = "#edf6ff";
-      ctx.font = "14px Arial";
-      const questText = quest.complete ? "Objetivo concluído!" : quest.started ? `Cristais: ${quest.crystals}/${quest.needed}` : "Fale com Mira";
-      ctx.fillText(questText, canvas.width - 240, 62);
-      ctx.fillStyle = "#9ae6b4";
-      ctx.fillText("E = interagir", canvas.width - 240, 86);
-      ctx.fillStyle = "#f8d57e";
-      ctx.fillText("Espaço = atacar", canvas.width - 240, 106);
-      ctx.fillStyle = "rgba(0, 0, 0, 0.46)";
-      ctx.fillRect(250, canvas.height - 52, canvas.width - 500, 30);
-      ctx.fillStyle = "#f5f7ff";
-      ctx.font = "16px Arial";
-      ctx.fillText(message, 265, canvas.height - 31);
-    }
-
-    function updateCamera() {
-      cameraX = clamp(player.x - canvas.width / 2 + player.w / 2, 0, worldWidth - canvas.width);
-      cameraY = clamp(player.y - canvas.height / 2 + player.h / 2, 0, worldHeight - canvas.height);
-    }
-
-    function update(dt) {
-      updatePlayer(dt);
-      updateEnemies(dt);
-      updateCamera();
-      if (messageTimer > 0) messageTimer -= dt;
-      if (messageTimer <= 0 && message !== "Aventure-se na vila...") message = "Aventure-se na vila...";
-    }
-
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      drawWorld();
-      drawNPC();
-      drawEnemies();
-      drawPlayer();
-      drawHud();
-    }
-
-    function gameLoop(ts) {
-      if (!gameLoop.last) gameLoop.last = ts;
-      const dt = Math.min((ts - gameLoop.last) / 1000, 0.033);
-      gameLoop.last = ts;
-      update(dt);
-      draw();
-      requestAnimationFrame(gameLoop);
-    }
-
-    const menuPanel = document.getElementById("menuPanel");
-    const panelContent = document.getElementById("panelContent");
-    const menuButtons = [...document.querySelectorAll(".menu-button")];
-
-    function renderMenuPanel(name) {
-      const panels = {
-        items: `<h2>🎒 Itens</h2><p>💎 Cristais: ${quest.crystals}</p><p>🗡️ Lâmina do Fogo: ${quest.complete ? "Equipado" : "Ainda não obtida"}</p><p class="muted">Seu inventário aparecerá aqui conforme encontrar itens.</p>`,
-        status: `<h2>🛡️ Status do aventureiro</h2><p>Nível: ${player.level}</p><p>Vida: ${player.hp} / ${player.maxHp}</p><p>Ataque: ${player.attack}</p><p>Experiência: ${player.xp} / ${player.toNext}</p>`,
-        options: `<h2>⚙️ Opções</h2><p>Controles: WASD ou setas para mover, Espaço para atacar e E para interagir.</p><p class="muted">O progresso desta sessão não é salvo.</p>`,
-        talents: `<h2>✨ Talentos</h2><p>⭐ Nível atual: ${player.level}</p><p>Ataque aprimorado: ${player.attack}</p><p class="muted">Continue ganhando experiência para evoluir e fortalecer seus talentos.</p>`
-      };
-      panelContent.innerHTML = panels[name];
-    }
-
-    function closeMenuPanel() {
-      menuPanel.hidden = true;
-      menuButtons.forEach((button) => button.setAttribute("aria-expanded", "false"));
-    }
-
-    menuButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        const isCurrentPanelOpen = !menuPanel.hidden && button.getAttribute("aria-expanded") === "true";
-        if (isCurrentPanelOpen) { closeMenuPanel(); return; }
-        menuButtons.forEach((item) => item.setAttribute("aria-expanded", "false"));
-        button.setAttribute("aria-expanded", "true");
-        renderMenuPanel(button.dataset.panel);
-        menuPanel.hidden = false;
-      });
+    const menuPanel = document.getElementById('menuPanel');
+    const panelContent = document.getElementById('panelContent');
+    const menuButtons = [...document.querySelectorAll('.menu-button')];
+    const panelMarkup = {
+      items: () => `<h2>🎒 Itens</h2><p>${items.map(item => `🎁 ${item}`).join('<br>')}</p><p>💎 Cristais da missão: ${crystals}</p>`,
+      status: () => `<h2>🛡️ Status</h2><p>Nível: ${player.level}</p><p>Vida: ${player.hp} / ${player.maxHp}</p><p>Ataque: ${player.attack}</p><p>Experiência: ${player.xp} / 40</p>`,
+      options: () => `<h2>⚙️ Opções</h2><p>Movimento: WASD ou setas</p><p>Ataque: Espaço • Interagir: E</p><p class="muted">Dica: pressione Esc para fechar este painel.</p>`,
+      talents: () => `<h2>✨ Talentos</h2><p>⭐ Nível do aventureiro: ${player.level}</p><p>⚔️ Poder de ataque: ${player.attack}</p><p class="muted">Derrote inimigos para ganhar experiência e subir de nível.</p>`
+    };
+    function closePanel() { menuPanel.hidden = true; menuButtons.forEach(button => button.setAttribute('aria-expanded', 'false')); }
+    menuButtons.forEach(button => button.addEventListener('click', () => {
+      if (!menuPanel.hidden && button.getAttribute('aria-expanded') === 'true') { closePanel(); return; }
+      menuButtons.forEach(item => item.setAttribute('aria-expanded', 'false'));
+      button.setAttribute('aria-expanded', 'true');
+      panelContent.innerHTML = panelMarkup[button.dataset.panel]();
+      menuPanel.hidden = false;
+    }));
+    document.querySelector('.panel-close').addEventListener('click', closePanel);
+    document.addEventListener('keydown', event => {
+      if (event.code === 'Escape') closePanel();
+      if (event.code === 'Space') { event.preventDefault(); attack(); }
+      if (event.code === 'KeyE') interact();
+      keys[event.code] = true;
     });
+    document.addEventListener('keyup', event => { keys[event.code] = false; });
 
-    document.querySelector(".panel-close").addEventListener("click", closeMenuPanel);
-
-    document.addEventListener("keydown", (e) => {
-      if (e.code === "Escape" && !menuPanel.hidden) {
-        closeMenuPanel();
-        return;
-      }
-      if (e.code === "Space") e.preventDefault();
-      keys[e.code] = true;
-      if (e.code === "Space") attack();
-      if (e.code === "KeyE") interact();
-    });
-
-    document.addEventListener("keyup", (e) => { keys[e.code] = false; });
-
-    generateWorld();
-    spawnEnemies();
-    setMessage("Aventure-se na vila...", 999);
-    requestAnimationFrame(gameLoop);
+    draw();
+    requestAnimationFrame(update);
   </script>
 </body>
 </html>
