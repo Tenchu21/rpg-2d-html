@@ -2,47 +2,159 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#101827" />
   <title>Dungeon of Ember</title>
   <style>
-    :root { color-scheme: dark; --text: #e9eefc; --accent: #ffd166; --panel: rgba(12,18,35,.96); }
+    :root {
+      color-scheme: dark;
+      --ink: #f5f2e8;
+      --gold: #ffd166;
+      --deep: #111827;
+      --panel: rgba(15, 23, 42, .97);
+    }
     * { box-sizing: border-box; }
-    html, body { margin: 0; min-height: 100%; background: #0f1220; color: var(--text); font-family: Arial, sans-serif; }
-    body { min-height: 100vh; display: grid; place-items: center; overflow: hidden; }
-    #gameWrap { position: relative; width: min(960px, 100vw); height: min(540px, 100vh); overflow: hidden; border: 2px solid rgba(255,255,255,.2); background: #1e2b35; box-shadow: 0 0 40px #0008; }
-    canvas { display: block; width: 100%; height: 100%; }
-    .hint { position: absolute; z-index: 2; top: 12px; left: 50%; transform: translateX(-50%); padding: 8px 12px; border-radius: 8px; background: #080d1bcc; font-size: 12px; text-align: center; pointer-events: none; }
+    html, body { width: 100%; height: 100%; margin: 0; }
+    body {
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: radial-gradient(ellipse at 50% 20%, #26394d 0%, #101827 68%, #090e17 100%);
+      color: var(--ink);
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+    }
+    #gameWrap {
+      position: relative;
+      isolation: isolate;
+      width: min(960px, 100vw);
+      height: min(540px, 100dvh);
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      border: 2px solid rgba(255, 220, 145, .55);
+      border-radius: 12px;
+      background: #315d3b;
+      box-shadow: 0 22px 80px #0009, 0 0 30px #ffd16620;
+    }
+    canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+    .top-hint {
+      position: absolute;
+      z-index: 3;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: calc(100% - 24px);
+      padding: 8px 13px;
+      border: 1px solid #ffffff25;
+      border-radius: 999px;
+      background: #0c1421df;
+      color: #f2ead8;
+      font-size: 12px;
+      text-align: center;
+      white-space: nowrap;
+      box-shadow: 0 3px 12px #0005;
+      pointer-events: none;
+    }
 
-    /* A barra fica fixa à janela, fora da área de desenho do canvas. */
-    .game-menu { position: fixed !important; z-index: 2147483000 !important; left: 50% !important; bottom: max(14px, env(safe-area-inset-bottom)) !important; transform: translateX(-50%) !important; display: flex !important; visibility: visible !important; opacity: 1 !important; gap: 8px; width: max-content; max-width: calc(100vw - 20px); padding: 8px; border: 1px solid #ffd16699; border-radius: 16px; background: rgba(12,18,35,.97); box-shadow: 0 8px 28px #0009; }
-    .menu-button { min-width: 92px; padding: 8px 12px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: var(--text); font: 600 13px Arial,sans-serif; cursor: pointer; }
-    .menu-button:hover, .menu-button[aria-expanded="true"] { background: #ffd16626; border-color: #ffd16680; color: var(--accent); }
-    .menu-icon { display: block; margin-bottom: 4px; font-size: 18px; }
-    .menu-panel { position: fixed !important; z-index: 2147483001 !important; left: 50% !important; bottom: 88px !important; transform: translateX(-50%) !important; width: min(340px, calc(100vw - 24px)); padding: 18px; border: 1px solid #ffd16680; border-radius: 14px; background: var(--panel); box-shadow: 0 12px 32px #000b; }
+    /* Sempre visível dentro do quadro do jogo e acima do canvas. */
+    #gameMenu {
+      position: absolute !important;
+      z-index: 20 !important;
+      display: flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      left: 50% !important;
+      bottom: max(12px, env(safe-area-inset-bottom)) !important;
+      transform: translateX(-50%) !important;
+      width: max-content;
+      max-width: calc(100% - 20px);
+      gap: 7px;
+      padding: 7px;
+      border: 1px solid #ffe1a070;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #253044f5, #101827fa);
+      box-shadow: 0 8px 26px #000b, inset 0 1px #ffffff20;
+      backdrop-filter: blur(8px);
+    }
+    .menu-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-width: 112px;
+      min-height: 46px;
+      padding: 8px 12px;
+      border: 1px solid #ffffff1a;
+      border-radius: 11px;
+      background: #ffffff0b;
+      color: #f5f2e8;
+      font: 700 14px/1 system-ui, sans-serif;
+      text-shadow: 0 1px 2px #000;
+      cursor: pointer;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+    }
+    .menu-button:hover, .menu-button[aria-expanded="true"] {
+      transform: translateY(-2px);
+      border-color: #ffd166cc;
+      background: #ffd16626;
+      color: #ffe29a;
+    }
+    .menu-button:focus-visible, .panel-close:focus-visible { outline: 3px solid #ffd166; outline-offset: 2px; }
+    .menu-icon { font-size: 19px; line-height: 1; }
+    .menu-panel {
+      position: absolute !important;
+      z-index: 21 !important;
+      left: 50% !important;
+      bottom: 76px !important;
+      transform: translateX(-50%) !important;
+      width: min(360px, calc(100% - 24px));
+      padding: 18px 20px;
+      border: 1px solid #ffd166a6;
+      border-radius: 15px;
+      background: var(--panel);
+      box-shadow: 0 14px 36px #000c;
+      backdrop-filter: blur(10px);
+    }
     .menu-panel[hidden] { display: none !important; }
-    .menu-panel h2 { margin: 0 36px 12px 0; color: var(--accent); font-size: 18px; }
-    .menu-panel p { margin: 8px 0; font-size: 14px; line-height: 1.45; }
-    .menu-panel .muted { color: #aebbd2; }
-    .panel-close { position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; border: 1px solid #ffffff44; border-radius: 8px; background: #ffffff10; color: var(--text); font-size: 18px; cursor: pointer; }
-    @media (max-width: 500px) { .game-menu { gap: 2px; padding: 5px; width: calc(100vw - 16px); justify-content: space-around; } .menu-button { min-width: 0; flex: 1; padding: 7px 3px; font-size: 11px; } .menu-icon { font-size: 16px; } .menu-panel { bottom: 78px !important; } .hint { top: 6px; font-size: 10px; } }
+    .menu-panel h2 { margin: 0 38px 13px 0; color: var(--gold); font-size: 19px; }
+    .menu-panel p { margin: 8px 0; color: #f1eee5; font-size: 14px; line-height: 1.5; }
+    .menu-panel .muted { color: #b7c1ce; }
+    .panel-close {
+      position: absolute; top: 10px; right: 10px; width: 31px; height: 31px;
+      border: 1px solid #ffffff35; border-radius: 9px; background: #ffffff10;
+      color: white; font-size: 20px; cursor: pointer;
+    }
+    @media (max-width: 560px) {
+      #gameWrap { width: 100vw; height: min(100dvh, 562.5vw); border-radius: 0; border-left: 0; border-right: 0; }
+      #gameMenu { width: calc(100% - 16px); max-width: none; gap: 4px; padding: 5px; }
+      .menu-button { flex: 1; min-width: 0; min-height: 44px; padding: 7px 3px; gap: 4px; font-size: clamp(11px, 3vw, 13px); }
+      .menu-icon { font-size: 17px; }
+      .top-hint { top: 7px; font-size: 10px; padding: 6px 9px; }
+      .menu-panel { bottom: 65px !important; }
+    }
+    @media (max-height: 420px) and (min-width: 561px) {
+      .menu-button { min-height: 38px; }
+      #gameMenu { bottom: 6px !important; }
+      .top-hint { top: 5px; }
+      .menu-panel { bottom: 58px !important; }
+    }
   </style>
 </head>
 <body>
   <main id="gameWrap">
     <canvas id="game" width="960" height="540" aria-label="Jogo RPG 2D"></canvas>
-    <div class="hint">WASD / Setas = mover • Espaço = atacar • E = interagir</div>
-  </main>
+    <div class="top-hint">WASD / Setas: mover &nbsp;•&nbsp; Espaço: atacar &nbsp;•&nbsp; E: interagir</div>
 
-  <nav class="game-menu" aria-label="Menu do jogo">
-    <button class="menu-button" type="button" data-panel="items" aria-expanded="false" aria-controls="menuPanel"><span class="menu-icon" aria-hidden="true">🎒</span>Itens</button>
-    <button class="menu-button" type="button" data-panel="status" aria-expanded="false" aria-controls="menuPanel"><span class="menu-icon" aria-hidden="true">🛡️</span>Status</button>
-    <button class="menu-button" type="button" data-panel="options" aria-expanded="false" aria-controls="menuPanel"><span class="menu-icon" aria-hidden="true">⚙️</span>Opções</button>
-    <button class="menu-button" type="button" data-panel="talents" aria-expanded="false" aria-controls="menuPanel"><span class="menu-icon" aria-hidden="true">✨</span>Talentos</button>
-  </nav>
-  <section class="menu-panel" id="menuPanel" aria-live="polite" hidden>
-    <button class="panel-close" type="button" aria-label="Fechar painel">×</button>
-    <div id="panelContent"></div>
-  </section>
+    <nav id="gameMenu" aria-label="Menu do jogo">
+      <button class="menu-button" type="button" data-panel="items" aria-expanded="false" aria-controls="menuPanel"><span class="menu-icon" aria-hidden="true">🎒</span><span>Itens</span></button>
+      <button class="menu-button" type="button" data-panel="status" aria-expanded="false" aria-controls="menuPanel"><span class="menu-icon" aria-hidden="true">🛡️</span><span>Status</span></button>
+      <button class="menu-button" type="button" data-panel="options" aria-expanded="false" aria-controls="menuPanel"><span class="menu-icon" aria-hidden="true">⚙️</span><span>Opções</span></button>
+      <button class="menu-button" type="button" data-panel="talents" aria-expanded="false" aria-controls="menuPanel"><span class="menu-icon" aria-hidden="true">✨</span><span>Talentos</span></button>
+    </nav>
+    <section class="menu-panel" id="menuPanel" aria-live="polite" hidden>
+      <button class="panel-close" type="button" aria-label="Fechar painel">×</button>
+      <div id="panelContent"></div>
+    </section>
+  </main>
 
   <script>
     const canvas = document.getElementById('game');
@@ -60,63 +172,115 @@
     let crystals = 0;
     let questStarted = false;
     let questComplete = false;
+    let lastFrame = 0;
 
-    function draw() {
-      ctx.fillStyle = '#3d8b59'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-      // Grama e caminhos decorativos
-      ctx.fillStyle = '#ffffff10';
-      for (let x = 20; x < canvas.width; x += 48) for (let y = 20; y < canvas.height; y += 46) ctx.fillRect(x, y, 4, 4);
-      ctx.fillStyle = '#947447'; ctx.fillRect(0, 235, canvas.width, 54); ctx.fillRect(705, 0, 55, 300);
-      // NPC
-      ctx.fillStyle = '#6db2ff'; ctx.fillRect(npc.x, npc.y, 26, 30); ctx.fillStyle = '#f4d6a0'; ctx.fillRect(npc.x + 7, npc.y - 9, 12, 12);
-      ctx.fillStyle = '#fff'; ctx.font = '14px Arial'; ctx.fillText('Mira', npc.x - 1, npc.y - 14);
-      // Inimigos
-      for (const enemy of enemies) {
-        ctx.fillStyle = '#7ce38b'; ctx.beginPath(); ctx.arc(enemy.x, enemy.y, 15, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#381b28'; ctx.fillRect(enemy.x - 16, enemy.y - 24, 32, 5);
-        ctx.fillStyle = '#ff4d4d'; ctx.fillRect(enemy.x - 16, enemy.y - 24, 32 * enemy.hp / enemy.maxHp, 5);
-      }
-      // Jogador
-      ctx.fillStyle = '#1e3a8a'; ctx.fillRect(player.x + 5, player.y - 7, 14, 12);
-      ctx.fillStyle = '#ffd166'; ctx.fillRect(player.x, player.y, player.size, player.size);
-      // HUD
-      ctx.fillStyle = '#0c1223dd'; ctx.fillRect(16, 16, 205, 56);
-      ctx.fillStyle = '#7ae582'; ctx.fillRect(22, 23, 190 * player.hp / player.maxHp, 16);
-      ctx.fillStyle = '#f2f5ff'; ctx.font = 'bold 14px Arial'; ctx.fillText(`HP ${player.hp}/${player.maxHp}  •  Nível ${player.level}`, 22, 59);
-      ctx.fillStyle = '#0c1223dd'; ctx.fillRect(canvas.width - 225, 16, 210, 72);
-      ctx.fillStyle = '#ffd166'; ctx.font = 'bold 14px Arial'; ctx.fillText('MISSÃO', canvas.width - 210, 38);
-      ctx.fillStyle = '#fff'; ctx.font = '13px Arial'; ctx.fillText(questComplete ? 'Concluída!' : questStarted ? `Cristais: ${crystals}/3` : 'Fale com Mira', canvas.width - 210, 60);
-      ctx.fillStyle = '#0c1223dd'; ctx.fillRect(250, canvas.height - 46, 460, 28);
-      ctx.fillStyle = '#fff'; ctx.font = '14px Arial'; ctx.fillText(message, 264, canvas.height - 27);
+    function roundedRect(x, y, w, h, r, color) {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, r);
+      ctx.fill();
     }
-
-    function update() {
-      const speed = 3;
+    function drawTree(x, y, scale = 1) {
+      ctx.fillStyle = '#172d23aa'; ctx.beginPath(); ctx.ellipse(x + 4, y + 22, 27 * scale, 10 * scale, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#704629'; ctx.fillRect(x - 5 * scale, y, 10 * scale, 27 * scale);
+      ctx.fillStyle = '#1e5639'; ctx.beginPath(); ctx.arc(x, y - 5 * scale, 23 * scale, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#34764a'; ctx.beginPath(); ctx.arc(x - 8 * scale, y - 13 * scale, 15 * scale, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#579154'; ctx.beginPath(); ctx.arc(x + 8 * scale, y - 10 * scale, 11 * scale, 0, Math.PI * 2); ctx.fill();
+    }
+    function drawPerson(x, y, color, name, isPlayer = false) {
+      ctx.fillStyle = '#13251bb0'; ctx.beginPath(); ctx.ellipse(x + 13, y + 29, 17, 7, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#f2c99a'; ctx.beginPath(); ctx.arc(x + 13, y + 2, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = isPlayer ? '#243f86' : '#6a3e88'; ctx.fillRect(x + 5, y - 5, 16, 8);
+      roundedRect(x + 3, y + 9, 20, 19, 5, color);
+      ctx.fillStyle = '#e9c18c'; ctx.fillRect(x + 5, y + 27, 6, 8); ctx.fillRect(x + 16, y + 27, 6, 8);
+      ctx.fillStyle = '#1b263b'; ctx.fillRect(x + 8, y + 1, 2, 2); ctx.fillRect(x + 16, y + 1, 2, 2);
+      if (name) {
+        ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+        roundedRect(x - 8, y - 28, 42, 18, 7, '#111827dd');
+        ctx.fillStyle = '#fff0c2'; ctx.fillText(name, x + 13, y - 15); ctx.textAlign = 'left';
+      }
+    }
+    function drawSlime(enemy) {
+      ctx.fillStyle = '#17332190'; ctx.beginPath(); ctx.ellipse(enemy.x, enemy.y + 13, 20, 7, 0, 0, Math.PI * 2); ctx.fill();
+      const gradient = ctx.createLinearGradient(enemy.x - 15, enemy.y - 15, enemy.x + 12, enemy.y + 14);
+      gradient.addColorStop(0, '#b8ff9b'); gradient.addColorStop(1, '#3ba864');
+      ctx.fillStyle = gradient; ctx.beginPath(); ctx.ellipse(enemy.x, enemy.y, 17, 14, 0, Math.PI, Math.PI * 2); ctx.lineTo(enemy.x + 17, enemy.y + 8); ctx.quadraticCurveTo(enemy.x, enemy.y + 20, enemy.x - 17, enemy.y + 8); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#18352a'; ctx.fillRect(enemy.x - 7, enemy.y + 1, 3, 4); ctx.fillRect(enemy.x + 5, enemy.y + 1, 3, 4);
+      ctx.fillStyle = '#13231caa'; ctx.fillRect(enemy.x - 18, enemy.y - 23, 36, 5);
+      ctx.fillStyle = '#ff6577'; ctx.fillRect(enemy.x - 17, enemy.y - 22, 34 * Math.max(0, enemy.hp) / enemy.maxHp, 3);
+    }
+    function draw() {
+      const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      bg.addColorStop(0, '#57915b'); bg.addColorStop(.55, '#3d8050'); bg.addColorStop(1, '#285b42');
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Grama pontilhada
+      for (let x = 14; x < canvas.width; x += 37) for (let y = 16; y < canvas.height; y += 33) {
+        ctx.fillStyle = (x * y) % 3 ? '#d9f3a51c' : '#173f321c'; ctx.fillRect(x, y, 3, 5);
+      }
+      // Caminhos de terra com bordas suaves
+      ctx.fillStyle = '#a88352'; ctx.fillRect(0, 238, canvas.width, 48); ctx.fillRect(714, 0, 52, 286);
+      ctx.fillStyle = '#c09a64'; ctx.fillRect(0, 238, canvas.width, 5); ctx.fillRect(714, 0, 5, 286);
+      ctx.fillStyle = '#76553955';
+      for (let x = 15; x < 950; x += 46) ctx.fillRect(x, 260 + (x % 3), 18, 3);
+      // Árvores e arbustos decorativos
+      drawTree(70, 95, 1.05); drawTree(172, 110, .78); drawTree(375, 92, .92); drawTree(570, 120, .82);
+      drawTree(880, 105, 1); drawTree(910, 315, .8); drawTree(75, 390, .9); drawTree(835, 465, 1.1);
+      // Pedras e flores
+      for (const [x, y] of [[225, 180], [540, 325], [615, 175], [350, 470], [810, 330]]) {
+        ctx.fillStyle = '#24392c66'; ctx.beginPath(); ctx.ellipse(x, y + 5, 13, 5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#9bada0'; ctx.beginPath(); ctx.ellipse(x, y, 10, 7, -.2, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#d5ddc8'; ctx.fillRect(x - 4, y - 3, 5, 2);
+      }
+      for (const [x, y] of [[255, 150], [330, 310], [610, 465], [865, 240], [500, 185], [130, 315]]) {
+        ctx.fillStyle = '#f7d96b'; ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#f4a8ba'; ctx.beginPath(); ctx.arc(x + 4, y + 2, 2, 0, Math.PI * 2); ctx.fill();
+      }
+      // HUD com moldura e brilho
+      roundedRect(15, 15, 220, 66, 13, '#101a26e8');
+      ctx.strokeStyle = '#ffe1a055'; ctx.lineWidth = 1; ctx.strokeRect(16, 16, 218, 64);
+      ctx.fillStyle = '#fff0d4'; ctx.font = 'bold 14px system-ui'; ctx.fillText(`AVENTUREIRO  •  Nv. ${player.level}`, 27, 37);
+      roundedRect(27, 47, 194, 12, 6, '#050b12');
+      const hpGrad = ctx.createLinearGradient(27, 0, 221, 0); hpGrad.addColorStop(0, '#ee5b69'); hpGrad.addColorStop(1, '#ff9b63');
+      roundedRect(29, 49, 190 * player.hp / player.maxHp, 8, 4, hpGrad);
+      ctx.fillStyle = '#f9e9d1'; ctx.font = '11px system-ui'; ctx.fillText(`♥ ${player.hp} / ${player.maxHp}`, 28, 74);
+      roundedRect(canvas.width - 222, 15, 207, 72, 12, '#101a26e8');
+      ctx.strokeStyle = '#ffe1a055'; ctx.strokeRect(canvas.width - 221, 16, 205, 70);
+      ctx.fillStyle = '#ffd166'; ctx.font = 'bold 13px system-ui'; ctx.fillText('✦  MISSÃO DE MIRA', canvas.width - 207, 39);
+      ctx.fillStyle = '#f4efe4'; ctx.font = '12px system-ui';
+      ctx.fillText(questComplete ? 'Recompensa recebida!' : questStarted ? `Cristais: ${crystals} / 3` : 'Encontre Mira na trilha', canvas.width - 207, 62);
+      // Personagens e monstros
+      drawSlime(enemies[0] || { x: 680, y: 380, hp: 0, maxHp: 32 });
+      for (let i = 1; i < enemies.length; i++) drawSlime(enemies[i]);
+      drawPerson(npc.x - 13, npc.y - 13, '#6aa6db', 'Mira');
+      drawPerson(player.x, player.y, '#c75e55', 'Herói', true);
+      // Mensagem
+      roundedRect(250, canvas.height - 70, 460, 28, 9, '#101a26df');
+      ctx.fillStyle = '#fff0d4'; ctx.font = '13px system-ui'; ctx.textAlign = 'center'; ctx.fillText(message, 480, canvas.height - 51); ctx.textAlign = 'left';
+    }
+    function update(timestamp) {
+      const dt = Math.min((timestamp - (lastFrame || timestamp)) / 1000, .04); lastFrame = timestamp;
+      const speed = 190 * dt;
       if (keys.ArrowUp || keys.KeyW) player.y -= speed;
       if (keys.ArrowDown || keys.KeyS) player.y += speed;
       if (keys.ArrowLeft || keys.KeyA) player.x -= speed;
       if (keys.ArrowRight || keys.KeyD) player.x += speed;
-      player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
-      player.y = Math.max(0, Math.min(canvas.height - player.size, player.y));
-      draw();
-      requestAnimationFrame(update);
+      player.x = Math.max(5, Math.min(canvas.width - player.size - 5, player.x));
+      player.y = Math.max(90, Math.min(canvas.height - player.size - 82, player.y));
+      draw(); requestAnimationFrame(update);
     }
-
     function attack() {
       const target = enemies.find(enemy => Math.hypot(player.x - enemy.x, player.y - enemy.y) < 55);
       if (!target) { message = 'Nenhum inimigo próximo.'; return; }
       target.hp -= player.attack;
       if (target.hp <= 0) {
-        enemies.splice(enemies.indexOf(target), 1);
-        player.xp += 15;
+        enemies.splice(enemies.indexOf(target), 1); player.xp += 15;
         if (questStarted && crystals < 3) crystals++;
         if (player.xp >= 40) { player.xp -= 40; player.level++; player.attack += 4; player.maxHp += 12; player.hp = player.maxHp; }
         message = `Você derrotou o ${target.kind}! +15 XP`;
       } else message = `Você acertou o ${target.kind}!`;
     }
-
     function interact() {
-      if (Math.hypot(player.x - npc.x, player.y - npc.y) > 60) { message = 'Chegue mais perto de Mira para conversar.'; return; }
+      if (Math.hypot(player.x - npc.x, player.y - npc.y) > 65) { message = 'Chegue mais perto de Mira para conversar.'; return; }
       if (!questStarted) { questStarted = true; message = 'Mira: Derrote 3 slimes para receber uma recompensa!'; }
       else if (crystals >= 3 && !questComplete) { questComplete = true; player.attack += 6; items.push('Lâmina do Fogo'); message = 'Missão concluída! Você ganhou a Lâmina do Fogo.'; }
       else if (questComplete) message = 'Mira: Obrigada pela ajuda, aventureiro!';
@@ -129,7 +293,7 @@
     const panelMarkup = {
       items: () => `<h2>🎒 Itens</h2><p>${items.map(item => `🎁 ${item}`).join('<br>')}</p><p>💎 Cristais da missão: ${crystals}</p>`,
       status: () => `<h2>🛡️ Status</h2><p>Nível: ${player.level}</p><p>Vida: ${player.hp} / ${player.maxHp}</p><p>Ataque: ${player.attack}</p><p>Experiência: ${player.xp} / 40</p>`,
-      options: () => `<h2>⚙️ Opções</h2><p>Movimento: WASD ou setas</p><p>Ataque: Espaço • Interagir: E</p><p class="muted">Dica: pressione Esc para fechar este painel.</p>`,
+      options: () => `<h2>⚙️ Opções</h2><p>Movimento: WASD ou setas</p><p>Ataque: Espaço • Interagir: E</p><p class="muted">Pressione Esc para fechar este painel.</p>`,
       talents: () => `<h2>✨ Talentos</h2><p>⭐ Nível do aventureiro: ${player.level}</p><p>⚔️ Poder de ataque: ${player.attack}</p><p class="muted">Derrote inimigos para ganhar experiência e subir de nível.</p>`
     };
     function closePanel() { menuPanel.hidden = true; menuButtons.forEach(button => button.setAttribute('aria-expanded', 'false')); }
@@ -148,9 +312,7 @@
       keys[event.code] = true;
     });
     document.addEventListener('keyup', event => { keys[event.code] = false; });
-
-    draw();
-    requestAnimationFrame(update);
+    draw(); requestAnimationFrame(update);
   </script>
 </body>
 </html>
