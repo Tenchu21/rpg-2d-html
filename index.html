@@ -55,7 +55,6 @@
       pointer-events: none;
     }
 
-    /* Sempre visível dentro do quadro do jogo e acima do canvas. */
     #gameMenu {
       position: absolute !important;
       z-index: 20 !important;
@@ -92,7 +91,7 @@
       cursor: pointer;
       transition: transform .15s ease, background .15s ease, border-color .15s ease;
     }
-    .menu-button:hover, .menu-button[aria-expanded="true"] {
+    .menu-button:hover, .menu-button[aria-expanded="true"], .menu-button.active {
       transform: translateY(-2px);
       border-color: #ffd166cc;
       background: #ffd16626;
@@ -149,6 +148,7 @@
       <button class="menu-button" type="button" data-panel="status" aria-expanded="false" aria-controls="menuPanel"><span class="menu-icon" aria-hidden="true">🛡️</span><span>Status</span></button>
       <button class="menu-button" type="button" data-panel="options" aria-expanded="false" aria-controls="menuPanel"><span class="menu-icon" aria-hidden="true">⚙️</span><span>Opções</span></button>
       <button class="menu-button" type="button" data-panel="talents" aria-expanded="false" aria-controls="menuPanel"><span class="menu-icon" aria-hidden="true">✨</span><span>Talentos</span></button>
+      <button id="autoHuntButton" class="menu-button" type="button" aria-expanded="false"><span class="menu-icon" aria-hidden="true">🎯</span><span>Caça Auto</span></button>
     </nav>
     <section class="menu-panel" id="menuPanel" aria-live="polite" hidden>
       <button class="panel-close" type="button" aria-label="Fechar painel">×</button>
@@ -159,7 +159,7 @@
   <script>
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
-    const player = { x: 100, y: 120, size: 24, hp: 100, maxHp: 100, attack: 12, level: 1, xp: 0 };
+    const player = { x: 100, y: 120, size: 24, hp: 100, maxHp: 100, attack: 12, level: 1, xp: 0, attackCooldown: 0 };
     const keys = Object.create(null);
     const items = ['Poção de vida'];
     let message = 'Explore a vila e encontre Mira!';
@@ -173,6 +173,8 @@
     let questStarted = false;
     let questComplete = false;
     let lastFrame = 0;
+    let autoHunt = false;
+    let autoHuntButton = null;
 
     function roundedRect(x, y, w, h, r, color) {
       ctx.fillStyle = color;
@@ -180,6 +182,7 @@
       ctx.roundRect(x, y, w, h, r);
       ctx.fill();
     }
+
     function drawTree(x, y, scale = 1) {
       ctx.fillStyle = '#172d23aa'; ctx.beginPath(); ctx.ellipse(x + 4, y + 22, 27 * scale, 10 * scale, 0, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#704629'; ctx.fillRect(x - 5 * scale, y, 10 * scale, 27 * scale);
@@ -187,6 +190,7 @@
       ctx.fillStyle = '#34764a'; ctx.beginPath(); ctx.arc(x - 8 * scale, y - 13 * scale, 15 * scale, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#579154'; ctx.beginPath(); ctx.arc(x + 8 * scale, y - 10 * scale, 11 * scale, 0, Math.PI * 2); ctx.fill();
     }
+
     function drawPerson(x, y, color, name, isPlayer = false) {
       ctx.fillStyle = '#13251bb0'; ctx.beginPath(); ctx.ellipse(x + 13, y + 29, 17, 7, 0, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#f2c99a'; ctx.beginPath(); ctx.arc(x + 13, y + 2, 8, 0, Math.PI * 2); ctx.fill();
@@ -200,6 +204,7 @@
         ctx.fillStyle = '#fff0c2'; ctx.fillText(name, x + 13, y - 15); ctx.textAlign = 'left';
       }
     }
+
     function drawSlime(enemy) {
       ctx.fillStyle = '#17332190'; ctx.beginPath(); ctx.ellipse(enemy.x, enemy.y + 13, 20, 7, 0, 0, Math.PI * 2); ctx.fill();
       const gradient = ctx.createLinearGradient(enemy.x - 15, enemy.y - 15, enemy.x + 12, enemy.y + 14);
@@ -209,23 +214,20 @@
       ctx.fillStyle = '#13231caa'; ctx.fillRect(enemy.x - 18, enemy.y - 23, 36, 5);
       ctx.fillStyle = '#ff6577'; ctx.fillRect(enemy.x - 17, enemy.y - 22, 34 * Math.max(0, enemy.hp) / enemy.maxHp, 3);
     }
+
     function draw() {
       const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
       bg.addColorStop(0, '#57915b'); bg.addColorStop(.55, '#3d8050'); bg.addColorStop(1, '#285b42');
       ctx.fillStyle = bg; ctx.fillRect(0, 0, canvas.width, canvas.height);
-      // Grama pontilhada
       for (let x = 14; x < canvas.width; x += 37) for (let y = 16; y < canvas.height; y += 33) {
         ctx.fillStyle = (x * y) % 3 ? '#d9f3a51c' : '#173f321c'; ctx.fillRect(x, y, 3, 5);
       }
-      // Caminhos de terra com bordas suaves
       ctx.fillStyle = '#a88352'; ctx.fillRect(0, 238, canvas.width, 48); ctx.fillRect(714, 0, 52, 286);
       ctx.fillStyle = '#c09a64'; ctx.fillRect(0, 238, canvas.width, 5); ctx.fillRect(714, 0, 5, 286);
       ctx.fillStyle = '#76553955';
       for (let x = 15; x < 950; x += 46) ctx.fillRect(x, 260 + (x % 3), 18, 3);
-      // Árvores e arbustos decorativos
       drawTree(70, 95, 1.05); drawTree(172, 110, .78); drawTree(375, 92, .92); drawTree(570, 120, .82);
       drawTree(880, 105, 1); drawTree(910, 315, .8); drawTree(75, 390, .9); drawTree(835, 465, 1.1);
-      // Pedras e flores
       for (const [x, y] of [[225, 180], [540, 325], [615, 175], [350, 470], [810, 330]]) {
         ctx.fillStyle = '#24392c66'; ctx.beginPath(); ctx.ellipse(x, y + 5, 13, 5, 0, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#9bada0'; ctx.beginPath(); ctx.ellipse(x, y, 10, 7, -.2, 0, Math.PI * 2); ctx.fill();
@@ -235,7 +237,6 @@
         ctx.fillStyle = '#f7d96b'; ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#f4a8ba'; ctx.beginPath(); ctx.arc(x + 4, y + 2, 2, 0, Math.PI * 2); ctx.fill();
       }
-      // HUD com moldura e brilho
       roundedRect(15, 15, 220, 66, 13, '#101a26e8');
       ctx.strokeStyle = '#ffe1a055'; ctx.lineWidth = 1; ctx.strokeRect(16, 16, 218, 64);
       ctx.fillStyle = '#fff0d4'; ctx.font = 'bold 14px system-ui'; ctx.fillText(`AVENTUREIRO  •  Nv. ${player.level}`, 27, 37);
@@ -248,29 +249,87 @@
       ctx.fillStyle = '#ffd166'; ctx.font = 'bold 13px system-ui'; ctx.fillText('✦  MISSÃO DE MIRA', canvas.width - 207, 39);
       ctx.fillStyle = '#f4efe4'; ctx.font = '12px system-ui';
       ctx.fillText(questComplete ? 'Recompensa recebida!' : questStarted ? `Cristais: ${crystals} / 3` : 'Encontre Mira na trilha', canvas.width - 207, 62);
-      // Personagens e monstros
-      drawSlime(enemies[0] || { x: 680, y: 380, hp: 0, maxHp: 32 });
+      if (enemies.length) { drawSlime(enemies[0]); }
       for (let i = 1; i < enemies.length; i++) drawSlime(enemies[i]);
       drawPerson(npc.x - 13, npc.y - 13, '#6aa6db', 'Mira');
       drawPerson(player.x, player.y, '#c75e55', 'Herói', true);
-      // Mensagem
       roundedRect(250, canvas.height - 70, 460, 28, 9, '#101a26df');
       ctx.fillStyle = '#fff0d4'; ctx.font = '13px system-ui'; ctx.textAlign = 'center'; ctx.fillText(message, 480, canvas.height - 51); ctx.textAlign = 'left';
+      if (autoHunt) {
+        ctx.fillStyle = '#ffd166'; ctx.fillRect(700, canvas.height - 65, 120, 18);
+        ctx.fillStyle = '#101827'; ctx.font = 'bold 12px system-ui'; ctx.fillText('CAÇA ATIVA', 715, canvas.height - 51);
+      }
     }
+
+    function getNearestEnemy() {
+      let target = null;
+      let nearestDistance = Infinity;
+
+      for (const enemy of enemies) {
+        const d = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+        if (d < nearestDistance) {
+          nearestDistance = d;
+          target = enemy;
+        }
+      }
+      return target;
+    }
+
+    function updateAutoHunt() {
+      if (!autoHunt) return;
+      const target = getNearestEnemy();
+      if (!target) return;
+
+      const dx = target.x - player.x;
+      const dy = target.y - player.y;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist > 28) {
+        const step = 180 * (1 / 60);
+        const moveX = (dx / dist) * step;
+        const moveY = (dy / dist) * step;
+        player.x += moveX;
+        player.y += moveY;
+      } else {
+        attack();
+      }
+
+      player.x = Math.max(5, Math.min(canvas.width - player.size - 5, player.x));
+      player.y = Math.max(90, Math.min(canvas.height - player.size - 82, player.y));
+    }
+
     function update(timestamp) {
       const dt = Math.min((timestamp - (lastFrame || timestamp)) / 1000, .04); lastFrame = timestamp;
+      if (player.attackCooldown > 0) {
+        player.attackCooldown = Math.max(0, player.attackCooldown - dt);
+      }
+
       const speed = 190 * dt;
-      if (keys.ArrowUp || keys.KeyW) player.y -= speed;
-      if (keys.ArrowDown || keys.KeyS) player.y += speed;
-      if (keys.ArrowLeft || keys.KeyA) player.x -= speed;
-      if (keys.ArrowRight || keys.KeyD) player.x += speed;
+      if (!autoHunt) {
+        if (keys.ArrowUp || keys.KeyW) player.y -= speed;
+        if (keys.ArrowDown || keys.KeyS) player.y += speed;
+        if (keys.ArrowLeft || keys.KeyA) player.x -= speed;
+        if (keys.ArrowRight || keys.KeyD) player.x += speed;
+      }
+
+      if (autoHunt) {
+        updateAutoHunt();
+      }
+
       player.x = Math.max(5, Math.min(canvas.width - player.size - 5, player.x));
       player.y = Math.max(90, Math.min(canvas.height - player.size - 82, player.y));
       draw(); requestAnimationFrame(update);
     }
+
     function attack() {
-      const target = enemies.find(enemy => Math.hypot(player.x - enemy.x, player.y - enemy.y) < 55);
+      if (player.attackCooldown > 0) return;
+      const target = getNearestEnemy();
       if (!target) { message = 'Nenhum inimigo próximo.'; return; }
+      if (Math.hypot(player.x - target.x, player.y - target.y) > 55 && !autoHunt) {
+        message = 'Você está muito longe para atacar.';
+        return;
+      }
+      player.attackCooldown = 0.45;
       target.hp -= player.attack;
       if (target.hp <= 0) {
         enemies.splice(enemies.indexOf(target), 1); player.xp += 15;
@@ -279,6 +338,7 @@
         message = `Você derrotou o ${target.kind}! +15 XP`;
       } else message = `Você acertou o ${target.kind}!`;
     }
+
     function interact() {
       if (Math.hypot(player.x - npc.x, player.y - npc.y) > 65) { message = 'Chegue mais perto de Mira para conversar.'; return; }
       if (!questStarted) { questStarted = true; message = 'Mira: Derrote 3 slimes para receber uma recompensa!'; }
@@ -296,15 +356,29 @@
       options: () => `<h2>⚙️ Opções</h2><p>Movimento: WASD ou setas</p><p>Ataque: Espaço • Interagir: E</p><p class="muted">Pressione Esc para fechar este painel.</p>`,
       talents: () => `<h2>✨ Talentos</h2><p>⭐ Nível do aventureiro: ${player.level}</p><p>⚔️ Poder de ataque: ${player.attack}</p><p class="muted">Derrote inimigos para ganhar experiência e subir de nível.</p>`
     };
-    function closePanel() { menuPanel.hidden = true; menuButtons.forEach(button => button.setAttribute('aria-expanded', 'false')); }
+
+    function closePanel() {
+      menuPanel.hidden = true;
+      menuButtons.forEach(button => button.setAttribute('aria-expanded', 'false'));
+    }
+
     menuButtons.forEach(button => button.addEventListener('click', () => {
+      if (button.id === 'autoHuntButton') {
+        autoHunt = !autoHunt;
+        button.classList.toggle('active', autoHunt);
+        button.setAttribute('aria-expanded', String(autoHunt));
+        message = autoHunt ? 'Caça automática ativada.' : 'Caça automática desativada.';
+        return;
+      }
       if (!menuPanel.hidden && button.getAttribute('aria-expanded') === 'true') { closePanel(); return; }
       menuButtons.forEach(item => item.setAttribute('aria-expanded', 'false'));
       button.setAttribute('aria-expanded', 'true');
       panelContent.innerHTML = panelMarkup[button.dataset.panel]();
       menuPanel.hidden = false;
     }));
+
     document.querySelector('.panel-close').addEventListener('click', closePanel);
+
     document.addEventListener('keydown', event => {
       if (event.code === 'Escape') closePanel();
       if (event.code === 'Space') { event.preventDefault(); attack(); }
@@ -312,6 +386,8 @@
       keys[event.code] = true;
     });
     document.addEventListener('keyup', event => { keys[event.code] = false; });
+
+    autoHuntButton = document.getElementById('autoHuntButton');
     draw(); requestAnimationFrame(update);
   </script>
 </body>
