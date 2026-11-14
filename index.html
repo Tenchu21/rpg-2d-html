@@ -4,105 +4,80 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#101827" />
-  <title>Dungeon of Ember</title>
+  <title>Crônicas de Ember — RPG</title>
   <style>
-    :root { color-scheme: dark; --gold: #ffd166; --text: #f5f2e8; }
-    * { box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; margin: 0; }
-    body {
-      display: grid;
-      place-items: center;
-      overflow: hidden;
-      background: radial-gradient(ellipse at 50% 20%, #26394d, #101827 68%, #090e17);
-      color: var(--text);
-      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
-    }
-    /* Todo o HUD e os menus ficam ancorados dentro da área do jogo. */
-    #gameWrap {
-      position: relative;
-      isolation: isolate;
-      width: min(960px, 100vw, 177.78dvh);
-      aspect-ratio: 16 / 9;
-      overflow: hidden;
-      border: 2px solid rgba(255, 220, 145, .55);
-      border-radius: 12px;
-      background: #315d3b;
-      box-shadow: 0 22px 80px #0009, 0 0 30px #ffd16620;
-    }
-    canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; image-rendering: pixelated; }
-    #gameMenu {
-      position: absolute;
-      z-index: 20;
-      left: 50%;
-      bottom: 10px;
-      transform: translateX(-50%);
-      display: flex;
-      align-items: stretch;
-      width: max-content;
-      max-width: calc(100% - 20px);
-      gap: 6px;
-      padding: 6px;
-      border: 1px solid #ffe1a070;
-      border-radius: 14px;
-      background: linear-gradient(180deg, #253044f5, #101827fa);
-      box-shadow: 0 8px 26px #000b, inset 0 1px #ffffff20;
-      backdrop-filter: blur(8px);
-    }
-    .menu-button {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      min-width: 103px;
-      min-height: 43px;
-      padding: 7px 10px;
-      border: 1px solid #ffffff1a;
-      border-radius: 10px;
-      background: #ffffff0b;
-      color: var(--text);
-      font: 700 13px/1 system-ui, sans-serif;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: transform .15s, background .15s, border-color .15s;
-    }
-    .menu-button:hover, .menu-button[aria-expanded="true"], .menu-button.active {
-      transform: translateY(-2px);
-      border-color: #ffd166cc;
-      background: #ffd16626;
-      color: #ffe29a;
-    }
-    .menu-button:focus-visible, .panel-close:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
-    .menu-icon { font-size: 18px; line-height: 1; }
-    .menu-panel {
-      position: absolute;
-      z-index: 21;
-      left: 50%;
-      bottom: 70px;
-      transform: translateX(-50%);
-      width: min(360px, calc(100% - 24px));
-      padding: 18px 20px;
-      border: 1px solid #ffd166a6;
-      border-radius: 15px;
-      background: rgba(15, 23, 42, .97);
-      box-shadow: 0 14px 36px #000c;
-      backdrop-filter: blur(10px);
-    }
-    .menu-panel[hidden] { display: none; }
-    .menu-panel h2 { margin: 0 38px 13px 0; color: var(--gold); font-size: 19px; }
-    .menu-panel p { margin: 8px 0; color: #f1eee5; font-size: 14px; line-height: 1.5; }
-    .menu-panel .muted { color: #b7c1ce; }
-    .panel-close { position: absolute; top: 10px; right: 10px; width: 31px; height: 31px; border: 1px solid #ffffff35; border-radius: 9px; background: #ffffff10; color: white; font-size: 20px; cursor: pointer; }
-    @media (max-width: 620px) {
-      #gameWrap { width: 100vw; border-radius: 0; border-left: 0; border-right: 0; }
-      #gameMenu { width: calc(100% - 12px); max-width: none; gap: 3px; padding: 4px; bottom: max(7px, env(safe-area-inset-bottom)); }
-      .menu-button { flex: 1; min-width: 0; min-height: 39px; gap: 3px; padding: 5px 2px; font-size: clamp(9px, 2.8vw, 12px); }
-      .menu-icon { font-size: clamp(14px, 4vw, 17px); }
-      .menu-panel { bottom: 61px; }
-    }
-    @media (max-height: 390px) {
-      #gameMenu { bottom: 4px; }
-      .menu-button { min-height: 34px; }
-      .menu-panel { bottom: 52px; }
+    :root { color-scheme: dark; --gold:#ffd166; --ink:#f7f3e8; --glass:rgba(13,20,32,.92); }
+    * { box-sizing:border-box; }
+    html,body { width:100%; height:100%; margin:0; }
+    body { display:grid; place-items:center; overflow:hidden; background:radial-gradient(ellipse at 50% 20%,#26394d,#101827 68%,#090e17); color:var(--ink); font-family:system-ui,-apple-system,Segoe UI,sans-serif; }
+    #gameWrap { position:relative; isolation:isolate; width:min(960px,100vw,177.78dvh); aspect-ratio:16/9; overflow:hidden; border:2px solid #ffe1a070; border-radius:12px; background:#315d3b; box-shadow:0 22px 80px #0009,0 0 30px #ffd16620; }
+    #game { position:absolute; inset:0; display:block; width:100%; height:100%; image-rendering:pixelated; }
+    .glass { border:1px solid #ffe1a055; border-radius:12px; background:linear-gradient(145deg,rgba(24,35,51,.95),rgba(10,17,28,.91)); box-shadow:0 7px 22px #0008,inset 0 1px #ffffff18; backdrop-filter:blur(8px); }
+    #playerHud { position:absolute; z-index:5; left:12px; top:12px; width:220px; padding:10px 12px; }
+    .player-name { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; color:#fff1d2; font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+    .meter { position:relative; height:15px; margin:5px 0; overflow:hidden; border:1px solid #ffffff20; border-radius:99px; background:#050a11; box-shadow:inset 0 2px 4px #000a; }
+    .meter-fill { width:100%; height:100%; border-radius:inherit; transition:width .18s ease; }
+    #hpFill { background:linear-gradient(90deg,#d83b4f,#ff8265); }
+    #energyFill { background:linear-gradient(90deg,#176dd1,#55c9ff); }
+    #xpFill { background:linear-gradient(90deg,#8c50db,#e58fff); }
+    .meter-label { position:absolute; inset:0; display:grid; place-items:center; color:white; font-size:10px; font-weight:800; text-shadow:0 1px 3px #000; }
+    #miniMapBox { position:absolute; z-index:5; top:12px; right:12px; width:154px; padding:7px; }
+    #miniMap { display:block; width:138px; height:82px; border-radius:7px; background:#244c38; }
+    .map-caption { padding-top:4px; color:#d5ddcf; font-size:9px; font-weight:700; letter-spacing:.12em; text-align:center; }
+    #gameMenu { position:absolute; z-index:10; top:14px; left:50%; transform:translateX(-50%); display:flex; gap:5px; padding:5px; }
+    .menu-button { display:flex; align-items:center; justify-content:center; gap:5px; min-height:38px; min-width:70px; padding:6px 9px; border:1px solid #ffffff1b; border-radius:9px; background:#ffffff0b; color:var(--ink); font:700 11px system-ui,sans-serif; cursor:pointer; white-space:nowrap; transition:.15s; }
+    .menu-button:hover,.menu-button[aria-expanded="true"],.menu-button.active { border-color:#ffd166bb; background:#ffd16625; color:#ffe29a; transform:translateY(-1px); }
+    .menu-icon { font-size:16px; }
+    #menuPanel { position:absolute; z-index:15; top:62px; left:50%; transform:translateX(-50%); width:min(340px,calc(100% - 24px)); padding:17px 19px; }
+    #menuPanel[hidden] { display:none; }
+    #menuPanel h2 { margin:0 32px 10px 0; color:var(--gold); font-size:18px; }
+    #menuPanel p { margin:7px 0; color:#f1eee5; font-size:13px; line-height:1.45; }
+    .panel-close { position:absolute; top:8px; right:9px; width:28px; height:28px; border:1px solid #ffffff35; border-radius:8px; background:#ffffff10; color:white; font-size:18px; cursor:pointer; }
+    #combatMessage { position:absolute; z-index:4; left:50%; bottom:83px; transform:translateX(-50%); max-width:80%; padding:7px 14px; border:1px solid #ffe1a044; border-radius:999px; background:#101a26dc; color:#fff1d2; font-size:12px; text-align:center; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; }
+    #skillBar { position:absolute; z-index:8; left:50%; bottom:10px; transform:translateX(-50%); display:flex; gap:7px; padding:6px; }
+    .skill { position:relative; display:grid; place-items:center; width:53px; height:51px; border:1px solid #ffe1a070; border-radius:11px; background:linear-gradient(145deg,#28364b,#111b2b); color:white; cursor:pointer; box-shadow:inset 0 1px #ffffff25,0 3px 8px #0008; }
+    .skill:hover { border-color:var(--gold); transform:translateY(-2px); }
+    .skill:disabled { filter:grayscale(.7); opacity:.58; cursor:not-allowed; }
+    .skill-icon { font-size:21px; line-height:1; }
+    .skill-key { position:absolute; right:4px; bottom:2px; color:#dce4ee; font-size:9px; font-weight:800; }
+    .skill-label { position:absolute; top:-18px; color:#f7f3e8; font-size:9px; font-weight:700; text-shadow:0 1px 3px #000; white-space:nowrap; }
+    .cooldown { position:absolute; inset:0; display:none; place-items:center; border-radius:10px; background:#050914bb; color:white; font-size:13px; font-weight:900; }
+    .skill.cooling .cooldown { display:grid; }
+    #autoHunt { min-width:76px; padding:0 8px; color:#ffe7a4; font-size:10px; font-weight:800; }
+    #characterSelect { position:absolute; z-index:30; inset:0; display:grid; place-items:center; padding:18px; background:linear-gradient(#08111dcc,#09101dec); }
+    #characterSelect[hidden] { display:none; }
+    .select-card { width:min(690px,100%); padding:22px; border:1px solid #ffd1668c; border-radius:18px; background:linear-gradient(145deg,#1d2b3d,#0c1421); box-shadow:0 20px 70px #000c; text-align:center; }
+    .select-card h1 { margin:0 0 5px; color:#ffe0a0; font-family:Georgia,serif; font-size:clamp(23px,5vw,36px); }
+    .select-card>p { margin:0 0 17px; color:#bec9d5; font-size:13px; }
+    .class-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+    .class-choice { min-height:160px; padding:16px 12px; border:1px solid #ffffff26; border-radius:13px; background:#ffffff08; color:var(--ink); cursor:pointer; transition:.16s; }
+    .class-choice:hover { border-color:var(--gold); background:#ffd16618; transform:translateY(-3px); }
+    .class-choice strong { display:block; margin:7px 0; color:#ffdf9a; font-size:15px; }
+    .class-choice span { display:block; color:#c8d1dc; font-size:11px; line-height:1.45; }
+    .class-emoji { font-size:30px; }
+    #startNote { margin-top:14px; color:#94a3b8; font-size:11px; }
+    @media(max-width:700px) {
+      #gameWrap { width:100vw; border:0; border-radius:0; }
+      #playerHud { left:6px; top:6px; width:clamp(138px,35vw,190px); padding:6px 8px; }
+      .player-name { font-size:9px; margin-bottom:4px; }
+      .meter { height:12px; margin:3px 0; }
+      .meter-label { font-size:8px; }
+      #miniMapBox { right:6px; top:6px; width:116px; padding:5px; }
+      #miniMap { width:104px; height:64px; }
+      .map-caption { font-size:8px; padding-top:2px; }
+      #gameMenu { top:86px; gap:2px; padding:3px; max-width:calc(100% - 12px); }
+      .menu-button { min-width:0; min-height:32px; padding:4px 5px; gap:3px; font-size:9px; }
+      .menu-icon { font-size:13px; }
+      #menuPanel { top:126px; }
+      #skillBar { bottom:max(7px,env(safe-area-inset-bottom)); gap:4px; padding:4px; }
+      .skill { width:clamp(39px,11vw,49px); height:44px; }
+      .skill-icon { font-size:18px; }
+      #autoHunt { min-width:54px; font-size:8px; }
+      #combatMessage { bottom:62px; max-width:94%; font-size:10px; }
+      .class-grid { gap:6px; }
+      .class-choice { min-height:135px; padding:10px 6px; }
+      .class-choice span { font-size:10px; }
+      .select-card { padding:16px 12px; }
     }
   </style>
 </head>
@@ -110,46 +85,120 @@
   <main id="gameWrap">
     <canvas id="game" width="960" height="540" aria-label="Jogo RPG 2D"></canvas>
 
-    <nav id="gameMenu" aria-label="Menu do jogo">
-      <button class="menu-button" type="button" data-panel="items" aria-expanded="false" aria-controls="menuPanel"><span class="menu-icon" aria-hidden="true">🎒</span><span>Itens</span></button>
-      <button class="menu-button" type="button" data-panel="status" aria-expanded="false" aria-controls="menuPanel"><span class="menu-icon" aria-hidden="true">🛡️</span><span>Status</span></button>
-      <button class="menu-button" type="button" data-panel="options" aria-expanded="false" aria-controls="menuPanel"><span class="menu-icon" aria-hidden="true">⚙️</span><span>Opções</span></button>
-      <button class="menu-button" type="button" data-panel="talents" aria-expanded="false" aria-controls="menuPanel"><span class="menu-icon" aria-hidden="true">✨</span><span>Talentos</span></button>
-      <button id="autoHuntButton" class="menu-button" type="button" aria-pressed="false"><span class="menu-icon" aria-hidden="true">🎯</span><span>Caça Auto</span></button>
-    </nav>
+    <section id="playerHud" class="glass" aria-label="Status do personagem">
+      <div class="player-name"><span id="heroName">Aventureiro</span><span id="heroLevel">Nv. 1</span></div>
+      <div class="meter"><div class="meter-fill" id="hpFill"></div><span class="meter-label" id="hpText">100 / 100 PV</span></div>
+      <div class="meter"><div class="meter-fill" id="energyFill"></div><span class="meter-label" id="energyText">100 / 100 EN</span></div>
+      <div class="meter"><div class="meter-fill" id="xpFill"></div><span class="meter-label" id="xpText">0 / 40 XP</span></div>
+    </section>
 
-    <section class="menu-panel" id="menuPanel" aria-live="polite" hidden>
-      <button class="panel-close" type="button" aria-label="Fechar painel">×</button>
+    <aside id="miniMapBox" class="glass" aria-label="Mini mapa">
+      <canvas id="miniMap" width="276" height="164"></canvas>
+      <div class="map-caption">MAPA DA REGIÃO</div>
+    </aside>
+
+    <nav id="gameMenu" class="glass" aria-label="Menu do jogo">
+      <button class="menu-button" type="button" data-panel="items" aria-expanded="false"><span class="menu-icon">🎒</span>Itens</button>
+      <button class="menu-button" type="button" data-panel="status" aria-expanded="false"><span class="menu-icon">🛡️</span>Status</button>
+      <button class="menu-button" type="button" data-panel="options" aria-expanded="false"><span class="menu-icon">⚙️</span>Opções</button>
+      <button class="menu-button" type="button" data-panel="talents" aria-expanded="false"><span class="menu-icon">✨</span>Talentos</button>
+    </nav>
+    <section id="menuPanel" class="glass" aria-live="polite" hidden>
+      <button class="panel-close" type="button" aria-label="Fechar">×</button>
       <div id="panelContent"></div>
+    </section>
+
+    <div id="combatMessage" role="status">Escolha sua classe para começar a aventura.</div>
+    <div id="skillBar" class="glass" aria-label="Habilidades">
+      <button class="skill" id="basicAttack" type="button" aria-label="Ataque básico"><span class="skill-label">Ataque</span><span class="skill-icon">⚔️</span><span class="skill-key">1</span><span class="cooldown"></span></button>
+      <button class="skill" id="skillOne" type="button" aria-label="Usar habilidade um"><span class="skill-label" id="skillOneName">Golpe</span><span class="skill-icon" id="skillOneIcon">💥</span><span class="skill-key">2</span><span class="cooldown"></span></button>
+      <button class="skill" id="skillTwo" type="button" aria-label="Usar habilidade dois"><span class="skill-label" id="skillTwoName">Investida</span><span class="skill-icon" id="skillTwoIcon">⚡</span><span class="skill-key">3</span><span class="cooldown"></span></button>
+      <button class="skill" id="skillThree" type="button" aria-label="Usar habilidade três"><span class="skill-label" id="skillThreeName">Cura</span><span class="skill-icon" id="skillThreeIcon">💚</span><span class="skill-key">4</span><span class="cooldown"></span></button>
+      <button class="skill" id="autoHunt" type="button" aria-pressed="false"><span class="skill-icon">🎯</span><span class="skill-key">AUTO</span></button>
+    </div>
+
+    <section id="characterSelect" aria-labelledby="selectTitle">
+      <div class="select-card">
+        <h1 id="selectTitle">Crônicas de Ember</h1>
+        <p>Escolha seu herói para iniciar a jornada</p>
+        <div class="class-grid">
+          <button class="class-choice" data-class="warrior" type="button"><span class="class-emoji">🛡️</span><strong>Guerreiro</strong><span>Resistente e poderoso.<br>PV alto, golpe devastador.</span></button>
+          <button class="class-choice" data-class="ranger" type="button"><span class="class-emoji">🏹</span><strong>Patrulheiro</strong><span>Ágil e preciso.<br>Energia alta, ataques velozes.</span></button>
+          <button class="class-choice" data-class="mage" type="button"><span class="class-emoji">🔮</span><strong>Maga</strong><span>Domina magia arcana.<br>Habilidades fortes e energia ampla.</span></button>
+        </div>
+        <div id="startNote">Você pode mover com WASD ou as setas. As teclas não são exibidas durante o jogo.</div>
+      </div>
     </section>
   </main>
 
   <script>
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
-    const player = { x: 100, y: 120, size: 24, hp: 100, maxHp: 100, attack: 12, level: 1, xp: 0, toNext: 40, attackCooldown: 0 };
+    const miniMap = document.getElementById('miniMap');
+    const mapCtx = miniMap.getContext('2d');
+    const messageEl = document.getElementById('combatMessage');
     const keys = Object.create(null);
-    const items = ['Poção de vida'];
-    let message = 'Explore a vila e encontre Mira!';
-    const npc = { x: 760, y: 130 };
-    const enemies = [
-      { x: 680, y: 380, hp: 32, maxHp: 32, kind: 'Slime' },
-      { x: 450, y: 420, hp: 32, maxHp: 32, kind: 'Slime' },
-      { x: 290, y: 350, hp: 32, maxHp: 32, kind: 'Slime' }
+    const spawnPoints = [
+      { x: 680, y: 380, kind: 'Slime' },
+      { x: 450, y: 420, kind: 'Slime' },
+      { x: 290, y: 350, kind: 'Slime' },
+      { x: 820, y: 245, kind: 'Slime' }
     ];
-    let crystals = 0;
+    const enemies = [];
+    const respawnTimers = spawnPoints.map(() => 0);
+    const npc = { x: 760, y: 130 };
+    const items = ['Poção de vida'];
+    const player = { x: 130, y: 170, size: 24, hp: 100, maxHp: 100, energy: 100, maxEnergy: 100, attack: 12, level: 1, xp: 0, toNext: 40, attackCooldown: 0, name: 'Aventureiro', classId: 'warrior', color: '#c75e55' };
+    const classes = {
+      warrior: { name: 'Guerreiro', color: '#c75e55', hp: 130, energy: 90, attack: 15, one: ['Golpe pesado', '💥', 25, 30], two: ['Rompimento', '🛡️', 35, 38], three: ['Brado vital', '💚', 30, 0] },
+      ranger: { name: 'Patrulheiro', color: '#4f9b72', hp: 100, energy: 115, attack: 12, one: ['Tiro preciso', '🏹', 20, 27], two: ['Rajada', '🌪️', 35, 22], three: ['Passo veloz', '🍃', 25, 0] },
+      mage: { name: 'Maga', color: '#8b69c9', hp: 85, energy: 145, attack: 17, one: ['Orbe arcano', '🔮', 25, 32], two: ['Nova arcana', '✨', 45, 28], three: ['Cura mística', '💚', 35, 0] }
+    };
+    let selectedClass = null;
+    let started = false;
+    let autoHunt = false;
     let questStarted = false;
     let questComplete = false;
+    let crystals = 0;
     let lastFrame = 0;
-    let autoHunt = false;
-    let attackTimer = 0;
+    let attackFlash = 0;
+    let shake = 0;
+    let particles = [];
+    const cooldowns = [0, 0, 0];
+    const abilityButtons = [document.getElementById('skillOne'), document.getElementById('skillTwo'), document.getElementById('skillThree')];
 
-    function roundedRect(x, y, w, h, r, color) {
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.roundRect(x, y, w, h, r);
-      ctx.fill();
+    function setMessage(text) { messageEl.textContent = text; }
+    function roundedRect(context, x, y, w, h, r, color) {
+      context.fillStyle = color; context.beginPath(); context.roundRect(x, y, w, h, r); context.fill();
     }
+    function createEnemy(index) {
+      const point = spawnPoints[index];
+      enemies.push({ id: index, x: point.x, y: point.y, hp: 38, maxHp: 38, kind: point.kind, hitFlash: 0 });
+    }
+    spawnPoints.forEach((_, index) => createEnemy(index));
+
+    function chooseClass(classId) {
+      selectedClass = classes[classId];
+      player.classId = classId;
+      player.name = selectedClass.name;
+      player.color = selectedClass.color;
+      player.hp = player.maxHp = selectedClass.hp;
+      player.energy = player.maxEnergy = selectedClass.energy;
+      player.attack = selectedClass.attack;
+      document.getElementById('heroName').textContent = selectedClass.name;
+      document.getElementById('characterSelect').hidden = true;
+      document.getElementById('skillOneName').textContent = selectedClass.one[0];
+      document.getElementById('skillOneIcon').textContent = selectedClass.one[1];
+      document.getElementById('skillTwoName').textContent = selectedClass.two[0];
+      document.getElementById('skillTwoIcon').textContent = selectedClass.two[1];
+      document.getElementById('skillThreeName').textContent = selectedClass.three[0];
+      document.getElementById('skillThreeIcon').textContent = selectedClass.three[1];
+      started = true;
+      setMessage(`${selectedClass.name}: sua aventura começou!`);
+      updateHud();
+    }
+    document.querySelectorAll('.class-choice').forEach(button => button.addEventListener('click', () => chooseClass(button.dataset.class)));
+
     function drawTree(x, y, scale = 1) {
       ctx.fillStyle = '#172d23aa'; ctx.beginPath(); ctx.ellipse(x + 4, y + 22, 27 * scale, 10 * scale, 0, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#704629'; ctx.fillRect(x - 5 * scale, y, 10 * scale, 27 * scale);
@@ -161,159 +210,199 @@
       ctx.fillStyle = '#13251bb0'; ctx.beginPath(); ctx.ellipse(x + 13, y + 29, 17, 7, 0, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#f2c99a'; ctx.beginPath(); ctx.arc(x + 13, y + 2, 8, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = isPlayer ? '#243f86' : '#6a3e88'; ctx.fillRect(x + 5, y - 5, 16, 8);
-      roundedRect(x + 3, y + 9, 20, 19, 5, color);
+      roundedRect(ctx, x + 3, y + 9, 20, 19, 5, color);
       ctx.fillStyle = '#e9c18c'; ctx.fillRect(x + 5, y + 27, 6, 8); ctx.fillRect(x + 16, y + 27, 6, 8);
       ctx.fillStyle = '#1b263b'; ctx.fillRect(x + 8, y + 1, 2, 2); ctx.fillRect(x + 16, y + 1, 2, 2);
       if (name) {
-        ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
-        roundedRect(x - 8, y - 28, 42, 18, 7, '#111827dd');
+        ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center'; roundedRect(ctx, x - 8, y - 28, 48, 18, 7, '#111827dd');
         ctx.fillStyle = '#fff0c2'; ctx.fillText(name, x + 13, y - 15); ctx.textAlign = 'left';
       }
     }
     function drawSlime(enemy) {
       ctx.fillStyle = '#17332190'; ctx.beginPath(); ctx.ellipse(enemy.x, enemy.y + 13, 20, 7, 0, 0, Math.PI * 2); ctx.fill();
       const gradient = ctx.createLinearGradient(enemy.x - 15, enemy.y - 15, enemy.x + 12, enemy.y + 14);
-      gradient.addColorStop(0, '#b8ff9b'); gradient.addColorStop(1, '#3ba864');
+      gradient.addColorStop(0, enemy.hitFlash > 0 ? '#ffffff' : '#b8ff9b'); gradient.addColorStop(1, '#3ba864');
       ctx.fillStyle = gradient; ctx.beginPath(); ctx.ellipse(enemy.x, enemy.y, 17, 14, 0, Math.PI, Math.PI * 2); ctx.lineTo(enemy.x + 17, enemy.y + 8); ctx.quadraticCurveTo(enemy.x, enemy.y + 20, enemy.x - 17, enemy.y + 8); ctx.closePath(); ctx.fill();
       ctx.fillStyle = '#18352a'; ctx.fillRect(enemy.x - 7, enemy.y + 1, 3, 4); ctx.fillRect(enemy.x + 5, enemy.y + 1, 3, 4);
       ctx.fillStyle = '#13231caa'; ctx.fillRect(enemy.x - 18, enemy.y - 23, 36, 5);
       ctx.fillStyle = '#ff6577'; ctx.fillRect(enemy.x - 17, enemy.y - 22, 34 * Math.max(0, enemy.hp) / enemy.maxHp, 3);
     }
-    function draw() {
+    function drawWorld() {
       const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      bg.addColorStop(0, '#57915b'); bg.addColorStop(.55, '#3d8050'); bg.addColorStop(1, '#285b42');
-      ctx.fillStyle = bg; ctx.fillRect(0, 0, canvas.width, canvas.height);
-      for (let x = 14; x < canvas.width; x += 37) for (let y = 16; y < canvas.height; y += 33) {
-        ctx.fillStyle = (x * y) % 3 ? '#d9f3a51c' : '#173f321c'; ctx.fillRect(x, y, 3, 5);
-      }
+      bg.addColorStop(0, '#57915b'); bg.addColorStop(.55, '#3d8050'); bg.addColorStop(1, '#285b42'); ctx.fillStyle = bg; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      for (let x = 14; x < canvas.width; x += 37) for (let y = 16; y < canvas.height; y += 33) { ctx.fillStyle = (x * y) % 3 ? '#d9f3a51c' : '#173f321c'; ctx.fillRect(x, y, 3, 5); }
       ctx.fillStyle = '#a88352'; ctx.fillRect(0, 238, canvas.width, 48); ctx.fillRect(714, 0, 52, 286);
       ctx.fillStyle = '#c09a64'; ctx.fillRect(0, 238, canvas.width, 5); ctx.fillRect(714, 0, 5, 286);
-      ctx.fillStyle = '#76553955';
-      for (let x = 15; x < 950; x += 46) ctx.fillRect(x, 260 + (x % 3), 18, 3);
-      drawTree(70, 95, 1.05); drawTree(172, 110, .78); drawTree(375, 92, .92); drawTree(570, 120, .82);
-      drawTree(880, 105, 1); drawTree(910, 315, .8); drawTree(75, 390, .9); drawTree(835, 465, 1.1);
-      for (const [x, y] of [[225, 180], [540, 325], [615, 175], [350, 470], [810, 330]]) {
-        ctx.fillStyle = '#24392c66'; ctx.beginPath(); ctx.ellipse(x, y + 5, 13, 5, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#9bada0'; ctx.beginPath(); ctx.ellipse(x, y, 10, 7, -.2, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#d5ddc8'; ctx.fillRect(x - 4, y - 3, 5, 2);
-      }
-      for (const [x, y] of [[255, 150], [330, 310], [610, 465], [865, 240], [500, 185], [130, 315]]) {
-        ctx.fillStyle = '#f7d96b'; ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#f4a8ba'; ctx.beginPath(); ctx.arc(x + 4, y + 2, 2, 0, Math.PI * 2); ctx.fill();
-      }
-      roundedRect(15, 15, 220, 66, 13, '#101a26e8');
-      ctx.strokeStyle = '#ffe1a055'; ctx.lineWidth = 1; ctx.strokeRect(16, 16, 218, 64);
-      ctx.fillStyle = '#fff0d4'; ctx.font = 'bold 14px system-ui'; ctx.fillText(`AVENTUREIRO  •  Nv. ${player.level}`, 27, 37);
-      roundedRect(27, 47, 194, 12, 6, '#050b12');
-      const hpGrad = ctx.createLinearGradient(27, 0, 221, 0); hpGrad.addColorStop(0, '#ee5b69'); hpGrad.addColorStop(1, '#ff9b63');
-      roundedRect(29, 49, 190 * player.hp / player.maxHp, 8, 4, hpGrad);
-      ctx.fillStyle = '#f9e9d1'; ctx.font = '11px system-ui'; ctx.fillText(`♥ ${player.hp} / ${player.maxHp}`, 28, 74);
-      roundedRect(canvas.width - 222, 15, 207, 72, 12, '#101a26e8');
-      ctx.strokeStyle = '#ffe1a055'; ctx.strokeRect(canvas.width - 221, 16, 205, 70);
-      ctx.fillStyle = '#ffd166'; ctx.font = 'bold 13px system-ui'; ctx.fillText('✦  MISSÃO DE MIRA', canvas.width - 207, 39);
-      ctx.fillStyle = '#f4efe4'; ctx.font = '12px system-ui';
-      ctx.fillText(questComplete ? 'Recompensa recebida!' : questStarted ? `Cristais: ${crystals} / 3` : 'Encontre Mira na trilha', canvas.width - 207, 62);
+      ctx.fillStyle = '#76553955'; for (let x = 15; x < 950; x += 46) ctx.fillRect(x, 260 + (x % 3), 18, 3);
+      drawTree(70, 95, 1.05); drawTree(172, 110, .78); drawTree(375, 92, .92); drawTree(570, 120, .82); drawTree(880, 105, 1); drawTree(910, 315, .8); drawTree(75, 390, .9); drawTree(835, 465, 1.1);
+      for (const [x, y] of [[225, 180], [540, 325], [615, 175], [350, 470], [810, 330]]) { ctx.fillStyle = '#24392c66'; ctx.beginPath(); ctx.ellipse(x, y + 5, 13, 5, 0, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#9bada0'; ctx.beginPath(); ctx.ellipse(x, y, 10, 7, -.2, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#d5ddc8'; ctx.fillRect(x - 4, y - 3, 5, 2); }
+      for (const [x, y] of [[255, 150], [330, 310], [610, 465], [865, 240], [500, 185], [130, 315]]) { ctx.fillStyle = '#f7d96b'; ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#f4a8ba'; ctx.beginPath(); ctx.arc(x + 4, y + 2, 2, 0, Math.PI * 2); ctx.fill(); }
+    }
+    function drawMiniMap() {
+      mapCtx.clearRect(0, 0, miniMap.width, miniMap.height);
+      mapCtx.fillStyle = '#29553d'; mapCtx.fillRect(0, 0, miniMap.width, miniMap.height);
+      mapCtx.strokeStyle = '#c5a36d'; mapCtx.lineWidth = 9;
+      mapCtx.beginPath(); mapCtx.moveTo(0, 78); mapCtx.lineTo(276, 78); mapCtx.moveTo(210, 0); mapCtx.lineTo(210, 150); mapCtx.stroke();
+      mapCtx.fillStyle = '#50724d';
+      for (const [x, y] of [[20,20],[56,25],[105,28],[170,21],[255,22],[25,135],[248,130]]) { mapCtx.beginPath(); mapCtx.arc(x,y,7,0,Math.PI*2); mapCtx.fill(); }
+      mapCtx.fillStyle = '#79c9ff'; mapCtx.beginPath(); mapCtx.arc(npc.x / 960 * miniMap.width, npc.y / 540 * miniMap.height, 5, 0, Math.PI*2); mapCtx.fill();
+      for (const enemy of enemies) { mapCtx.fillStyle = '#ff6b73'; mapCtx.beginPath(); mapCtx.arc(enemy.x / 960 * miniMap.width, enemy.y / 540 * miniMap.height, 4, 0, Math.PI*2); mapCtx.fill(); }
+      mapCtx.fillStyle = '#ffe27a'; mapCtx.strokeStyle = '#362717'; mapCtx.lineWidth = 2;
+      mapCtx.beginPath(); mapCtx.arc(player.x / 960 * miniMap.width, player.y / 540 * miniMap.height, 5, 0, Math.PI*2); mapCtx.fill(); mapCtx.stroke();
+    }
+    function updateHud() {
+      const hpPct = Math.max(0, player.hp / player.maxHp * 100);
+      const energyPct = Math.max(0, player.energy / player.maxEnergy * 100);
+      const xpPct = Math.max(0, player.xp / player.toNext * 100);
+      document.getElementById('hpFill').style.width = `${hpPct}%`;
+      document.getElementById('energyFill').style.width = `${energyPct}%`;
+      document.getElementById('xpFill').style.width = `${xpPct}%`;
+      document.getElementById('hpText').textContent = `${Math.ceil(player.hp)} / ${player.maxHp} PV`;
+      document.getElementById('energyText').textContent = `${Math.floor(player.energy)} / ${player.maxEnergy} EN`;
+      document.getElementById('xpText').textContent = `${player.xp} / ${player.toNext} XP`;
+      document.getElementById('heroLevel').textContent = `Nv. ${player.level}`;
+      abilityButtons.forEach((button, index) => {
+        button.disabled = !started || player.energy < selectedClass?.[['one','two','three'][index]][2] || cooldowns[index] > 0;
+        button.classList.toggle('cooling', cooldowns[index] > 0);
+        button.querySelector('.cooldown').textContent = cooldowns[index] > 0 ? Math.ceil(cooldowns[index]) : '';
+      });
+    }
+    function draw() {
+      ctx.save();
+      if (shake > 0) ctx.translate((Math.random() - .5) * shake, (Math.random() - .5) * shake);
+      drawWorld();
       for (const enemy of enemies) drawSlime(enemy);
       drawPerson(npc.x - 13, npc.y - 13, '#6aa6db', 'Mira');
-      drawPerson(player.x, player.y, '#c75e55', 'Herói', true);
-      roundedRect(250, canvas.height - 70, 460, 28, 9, '#101a26df');
-      ctx.fillStyle = '#fff0d4'; ctx.font = '13px system-ui'; ctx.textAlign = 'center'; ctx.fillText(message, 480, canvas.height - 51); ctx.textAlign = 'left';
-      if (autoHunt) {
-        roundedRect(760, canvas.height - 67, 150, 25, 8, '#ffd166');
-        ctx.fillStyle = '#101827'; ctx.font = 'bold 12px system-ui'; ctx.fillText('🎯 CAÇA ATIVA', 780, canvas.height - 50);
+      if (started) drawPerson(player.x, player.y, player.color, player.name, true);
+      for (const p of particles) { ctx.globalAlpha = Math.max(0, p.life / p.maxLife); ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill(); }
+      ctx.globalAlpha = 1;
+      if (attackFlash > 0) {
+        ctx.strokeStyle = `rgba(255,235,150,${Math.min(attackFlash * 3, .9)})`; ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.arc(player.x + 12, player.y + 12, 38 + (0.25 - attackFlash) * 55, -1.1, 1.2); ctx.stroke();
       }
+      ctx.restore();
+      drawMiniMap();
+      if (autoHunt) { roundedRect(ctx, 15, 96, 142, 25, 8, '#ffd166'); ctx.fillStyle = '#172033'; ctx.font = 'bold 12px system-ui'; ctx.fillText('🎯 CAÇA AUTOMÁTICA', 25, 113); }
     }
-    function getNearestEnemy() {
-      let target = null; let nearestDistance = Infinity;
-      for (const enemy of enemies) {
-        const d = Math.hypot(player.x - enemy.x, player.y - enemy.y);
-        if (d < nearestDistance) { nearestDistance = d; target = enemy; }
-      }
+    function addHitParticles(x, y, color = '#ffe27a') {
+      for (let i = 0; i < 9; i++) { const angle = Math.random() * Math.PI * 2; const speed = 35 + Math.random() * 100; particles.push({ x, y, vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed, life: .35 + Math.random()*.25, maxLife: .6, size: 2 + Math.random()*3, color }); }
+    }
+    function nearestEnemy() {
+      let target = null; let best = Infinity;
+      for (const enemy of enemies) { const d = Math.hypot(player.x - enemy.x, player.y - enemy.y); if (d < best) { best = d; target = enemy; } }
       return target;
     }
-    function attack() {
-      if (player.attackCooldown > 0) return false;
-      const target = getNearestEnemy();
-      if (!target) { message = 'Não há inimigos na área.'; return false; }
-      const distance = Math.hypot(player.x - target.x, player.y - target.y);
-      if (distance > 42) return false;
-      player.attackCooldown = .45;
-      target.hp -= player.attack;
-      if (target.hp <= 0) {
-        enemies.splice(enemies.indexOf(target), 1);
-        player.xp += 15;
-        if (questStarted && crystals < 3) crystals++;
-        if (player.xp >= player.toNext) {
-          player.xp -= player.toNext; player.level++; player.attack += 4;
-          player.maxHp += 12; player.hp = player.maxHp; player.toNext = Math.floor(player.toNext * 1.5);
-        }
-        message = `Você derrotou o ${target.kind}! +15 XP`;
-      } else message = `Você acertou o ${target.kind}!`;
+    function awardKill(enemy) {
+      enemies.splice(enemies.indexOf(enemy), 1);
+      respawnTimers[enemy.id] = 7;
+      addHitParticles(enemy.x, enemy.y, '#ffdc72');
+      player.xp += 15;
+      if (questStarted && crystals < 3) crystals++;
+      if (player.xp >= player.toNext) {
+        player.xp -= player.toNext; player.level++; player.attack += 3; player.maxHp += 10; player.hp = player.maxHp; player.toNext = Math.floor(player.toNext * 1.45);
+        setMessage(`Subiu para o nível ${player.level}!`);
+      } else setMessage(`${enemy.kind} derrotado! +15 XP • Renasce em 7 segundos.`);
+    }
+    function attack(power = player.attack, range = 46, color = '#ffe27a') {
+      if (!started || player.attackCooldown > 0) return false;
+      const target = nearestEnemy();
+      if (!target || Math.hypot(player.x-target.x,player.y-target.y) > range) { if (!autoHunt) setMessage('Chegue mais perto do inimigo.'); return false; }
+      player.attackCooldown = .42; attackFlash = .22; shake = 3; target.hp -= power; target.hitFlash = .12; addHitParticles(target.x,target.y,color);
+      if (target.hp <= 0) awardKill(target); else setMessage(`Acerto! ${power} de dano.`);
       return true;
+    }
+    function useAbility(index) {
+      if (!started || cooldowns[index] > 0) return;
+      const ability = selectedClass[['one','two','three'][index]];
+      const [name, icon, cost, damage] = ability;
+      if (player.energy < cost) { setMessage('Energia insuficiente para essa habilidade.'); return; }
+      player.energy -= cost; cooldowns[index] = [3, 6, 8][index];
+      if (damage > 0) {
+        const target = nearestEnemy();
+        if (!target || Math.hypot(player.x-target.x,player.y-target.y) > (index === 1 ? 135 : 100)) { player.energy = Math.min(player.maxEnergy, player.energy + cost); cooldowns[index] = 0; setMessage('Não há inimigo ao alcance da habilidade.'); return; }
+        attackFlash = .35; shake = index === 1 ? 9 : 5;
+        if (index === 1) {
+          for (const enemy of [...enemies]) if (Math.hypot(player.x-enemy.x,player.y-enemy.y) < 105) { enemy.hp -= damage; addHitParticles(enemy.x,enemy.y,'#a8e8ff'); if (enemy.hp <= 0) awardKill(enemy); }
+        } else { target.hp -= damage; addHitParticles(target.x,target.y,'#a8e8ff'); if (target.hp <= 0) awardKill(target); }
+        setMessage(`${name}!`);
+      } else {
+        if (index === 2) { player.hp = Math.min(player.maxHp, player.hp + 35); addHitParticles(player.x+12,player.y+12,'#72ffae'); setMessage(`${name}: vida restaurada.`); }
+        else { player.x = Math.max(25, Math.min(925, player.x + (Math.random()-.5)*85)); player.y = Math.max(100, Math.min(435, player.y + (Math.random()-.5)*85)); setMessage(`${name}! Você se reposicionou.`); }
+      }
+      updateHud();
+    }
+    function interact() {
+      if (!started) return;
+      if (Math.hypot(player.x - npc.x, player.y - npc.y) > 65) { setMessage('Chegue mais perto de Mira para conversar.'); return; }
+      if (!questStarted) { questStarted = true; setMessage('Mira: Derrote 3 slimes para receber uma recompensa!'); }
+      else if (crystals >= 3 && !questComplete) { questComplete = true; player.attack += 6; items.push('Lâmina do Fogo'); setMessage('Missão concluída! Você ganhou a Lâmina do Fogo.'); }
+      else if (questComplete) setMessage('Mira: Obrigada pela ajuda, aventureiro!');
+      else setMessage(`Mira: Ainda faltam ${3-crystals} cristais.`);
     }
     function update(timestamp) {
       const dt = Math.min((timestamp - (lastFrame || timestamp)) / 1000, .04); lastFrame = timestamp;
-      player.attackCooldown = Math.max(0, player.attackCooldown - dt);
-      attackTimer -= dt;
-      const speed = 190 * dt;
-      if (!autoHunt) {
-        if (keys.ArrowUp || keys.KeyW) player.y -= speed;
-        if (keys.ArrowDown || keys.KeyS) player.y += speed;
-        if (keys.ArrowLeft || keys.KeyA) player.x -= speed;
-        if (keys.ArrowRight || keys.KeyD) player.x += speed;
-      } else {
-        const target = getNearestEnemy();
-        if (target) {
-          const dx = target.x - player.x; const dy = target.y - player.y; const dist = Math.hypot(dx, dy);
-          if (dist > 34) { player.x += dx / dist * 125 * dt; player.y += dy / dist * 125 * dt; }
-          else if (attackTimer <= 0) { attack(); attackTimer = .48; }
+      if (started) {
+        player.attackCooldown = Math.max(0, player.attackCooldown - dt);
+        player.energy = Math.min(player.maxEnergy, player.energy + 13 * dt);
+        cooldowns.forEach((_,i) => cooldowns[i] = Math.max(0,cooldowns[i]-dt));
+        attackFlash = Math.max(0,attackFlash-dt); shake = Math.max(0,shake-18*dt);
+        for (const particle of particles) { particle.x += particle.vx*dt; particle.y += particle.vy*dt; particle.vy += 70*dt; particle.life -= dt; }
+        particles = particles.filter(p => p.life > 0);
+        for (let i=0;i<respawnTimers.length;i++) if (respawnTimers[i] > 0) { respawnTimers[i] -= dt; if (respawnTimers[i] <= 0) { createEnemy(i); setMessage('Um monstro reapareceu na região!'); } }
+        const speed = 190*dt;
+        if (autoHunt) {
+          const target = nearestEnemy();
+          if (target) { const dx=target.x-player.x, dy=target.y-player.y, distance=Math.hypot(dx,dy); if (distance>37) { player.x += dx/distance*135*dt; player.y += dy/distance*135*dt; } else attack(); }
+        } else {
+          if (keys.ArrowUp||keys.KeyW) player.y-=speed;
+          if (keys.ArrowDown||keys.KeyS) player.y+=speed;
+          if (keys.ArrowLeft||keys.KeyA) player.x-=speed;
+          if (keys.ArrowRight||keys.KeyD) player.x+=speed;
         }
+        player.x=Math.max(26,Math.min(canvas.width-player.size-26,player.x));
+        player.y=Math.max(105,Math.min(canvas.height-player.size-80,player.y));
+        for (const enemy of enemies) enemy.hitFlash=Math.max(0,enemy.hitFlash-dt);
+        updateHud();
       }
-      player.x = Math.max(28, Math.min(canvas.width - player.size - 28, player.x));
-      player.y = Math.max(100, Math.min(canvas.height - player.size - 88, player.y));
       draw(); requestAnimationFrame(update);
-    }
-    function interact() {
-      if (Math.hypot(player.x - npc.x, player.y - npc.y) > 65) { message = 'Chegue mais perto de Mira para conversar.'; return; }
-      if (!questStarted) { questStarted = true; message = 'Mira: Derrote 3 slimes para receber uma recompensa!'; }
-      else if (crystals >= 3 && !questComplete) { questComplete = true; player.attack += 6; items.push('Lâmina do Fogo'); message = 'Missão concluída! Você ganhou a Lâmina do Fogo.'; }
-      else if (questComplete) message = 'Mira: Obrigada pela ajuda, aventureiro!';
-      else message = `Mira: Ainda faltam ${3 - crystals} cristais.`;
     }
 
     const menuPanel = document.getElementById('menuPanel');
     const panelContent = document.getElementById('panelContent');
     const menuButtons = [...document.querySelectorAll('.menu-button[data-panel]')];
-    const autoHuntButton = document.getElementById('autoHuntButton');
     const panelMarkup = {
       items: () => `<h2>🎒 Itens</h2><p>${items.map(item => `🎁 ${item}`).join('<br>')}</p><p>💎 Cristais da missão: ${crystals}</p>`,
-      status: () => `<h2>🛡️ Status</h2><p>Nível: ${player.level}</p><p>Vida: ${player.hp} / ${player.maxHp}</p><p>Ataque: ${player.attack}</p><p>Experiência: ${player.xp} / ${player.toNext}</p>`,
-      options: () => `<h2>⚙️ Opções</h2><p>Use as setas ou WASD para andar.</p><p>Espaço: atacar • E: interagir com Mira.</p>`,
-      talents: () => `<h2>✨ Talentos</h2><p>⭐ Nível do aventureiro: ${player.level}</p><p>⚔️ Poder de ataque: ${player.attack}</p><p class="muted">Derrote inimigos para ganhar experiência e subir de nível.</p>`
+      status: () => `<h2>🛡️ Status</h2><p>Classe: ${player.name} • Nível: ${player.level}</p><p>Vida: ${Math.ceil(player.hp)} / ${player.maxHp} PV</p><p>Energia: ${Math.floor(player.energy)} / ${player.maxEnergy} EN</p><p>Ataque: ${player.attack} • XP: ${player.xp} / ${player.toNext}</p>`,
+      options: () => `<h2>⚙️ Opções</h2><p>Movimento: WASD ou setas • Ataque: Espaço</p><p>Interagir com Mira: E • Habilidades: teclas 2, 3 e 4.</p><p>Os monstros renascem após alguns segundos.</p>`,
+      talents: () => `<h2>✨ Talentos</h2><p>Classe: ${player.name}</p><p>⚔️ Poder de ataque: ${player.attack}</p><p>Habilidades: ${selectedClass ? selectedClass.one[0] + ', ' + selectedClass.two[0] + ' e ' + selectedClass.three[0] : 'Escolha uma classe para ver os talentos.'}</p>`
     };
-    function closePanel() { menuPanel.hidden = true; menuButtons.forEach(button => button.setAttribute('aria-expanded', 'false')); }
-    menuButtons.forEach(button => button.addEventListener('click', () => {
-      if (!menuPanel.hidden && button.getAttribute('aria-expanded') === 'true') { closePanel(); return; }
-      menuButtons.forEach(item => item.setAttribute('aria-expanded', 'false'));
-      button.setAttribute('aria-expanded', 'true');
-      panelContent.innerHTML = panelMarkup[button.dataset.panel]();
-      menuPanel.hidden = false;
+    function closePanel() { menuPanel.hidden=true; menuButtons.forEach(button=>button.setAttribute('aria-expanded','false')); }
+    menuButtons.forEach(button=>button.addEventListener('click',()=>{
+      if (!started) { setMessage('Escolha uma classe antes de abrir o menu.'); return; }
+      if (!menuPanel.hidden && button.getAttribute('aria-expanded')==='true') { closePanel(); return; }
+      menuButtons.forEach(item=>item.setAttribute('aria-expanded','false'));
+      button.setAttribute('aria-expanded','true'); panelContent.innerHTML=panelMarkup[button.dataset.panel](); menuPanel.hidden=false;
     }));
-    autoHuntButton.addEventListener('click', () => {
-      autoHunt = !autoHunt;
-      autoHuntButton.classList.toggle('active', autoHunt);
-      autoHuntButton.setAttribute('aria-pressed', String(autoHunt));
-      message = autoHunt ? 'Caça automática ativada.' : 'Caça automática desativada.';
+    document.querySelector('.panel-close').addEventListener('click',closePanel);
+    document.getElementById('autoHunt').addEventListener('click',event=>{
+      if (!started) return;
+      autoHunt=!autoHunt; event.currentTarget.classList.toggle('active',autoHunt); event.currentTarget.setAttribute('aria-pressed',String(autoHunt));
+      setMessage(autoHunt?'Caça automática ativada.':'Caça automática desativada.');
     });
-    document.querySelector('.panel-close').addEventListener('click', closePanel);
-    document.addEventListener('keydown', event => {
-      if (event.code === 'Escape') closePanel();
-      if (event.code === 'Space') { event.preventDefault(); attack(); }
-      if (event.code === 'KeyE') interact();
-      keys[event.code] = true;
+    document.getElementById('basicAttack').addEventListener('click',()=>attack());
+    abilityButtons.forEach((button,index)=>button.addEventListener('click',()=>useAbility(index)));
+    document.addEventListener('keydown',event=>{
+      if (event.code==='Escape') closePanel();
+      if (event.code==='Space') { event.preventDefault(); attack(); }
+      if (event.code==='KeyE') interact();
+      if (event.code==='Digit2') useAbility(0);
+      if (event.code==='Digit3') useAbility(1);
+      if (event.code==='Digit4') useAbility(2);
+      if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(event.code)) event.preventDefault();
+      keys[event.code]=true;
     });
-    document.addEventListener('keyup', event => { keys[event.code] = false; });
-    draw(); requestAnimationFrame(update);
+    document.addEventListener('keyup',event=>{ keys[event.code]=false; });
+    draw(); updateHud(); requestAnimationFrame(update);
   </script>
 </body>
 </html>
