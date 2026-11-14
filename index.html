@@ -6,28 +6,22 @@
   <meta name="theme-color" content="#101827" />
   <title>Dungeon of Ember</title>
   <style>
-    :root {
-      color-scheme: dark;
-      --ink: #f5f2e8;
-      --gold: #ffd166;
-      --deep: #111827;
-      --panel: rgba(15, 23, 42, .97);
-    }
+    :root { color-scheme: dark; --gold: #ffd166; --text: #f5f2e8; }
     * { box-sizing: border-box; }
     html, body { width: 100%; height: 100%; margin: 0; }
     body {
       display: grid;
       place-items: center;
       overflow: hidden;
-      background: radial-gradient(ellipse at 50% 20%, #26394d 0%, #101827 68%, #090e17 100%);
-      color: var(--ink);
+      background: radial-gradient(ellipse at 50% 20%, #26394d, #101827 68%, #090e17);
+      color: var(--text);
       font-family: system-ui, -apple-system, Segoe UI, sans-serif;
     }
+    /* Todo o HUD e os menus ficam ancorados dentro da área do jogo. */
     #gameWrap {
       position: relative;
       isolation: isolate;
-      width: min(960px, 100vw);
-      height: min(540px, 100dvh);
+      width: min(960px, 100vw, 177.78dvh);
       aspect-ratio: 16 / 9;
       overflow: hidden;
       border: 2px solid rgba(255, 220, 145, .55);
@@ -35,41 +29,21 @@
       background: #315d3b;
       box-shadow: 0 22px 80px #0009, 0 0 30px #ffd16620;
     }
-    canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
-    .top-hint {
-      position: absolute;
-      z-index: 3;
-      top: 12px;
-      left: 50%;
-      transform: translateX(-50%);
-      max-width: calc(100% - 24px);
-      padding: 8px 13px;
-      border: 1px solid #ffffff25;
-      border-radius: 999px;
-      background: #0c1421df;
-      color: #f2ead8;
-      font-size: 12px;
-      text-align: center;
-      white-space: nowrap;
-      box-shadow: 0 3px 12px #0005;
-      pointer-events: none;
-    }
-
+    canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; image-rendering: pixelated; }
     #gameMenu {
-      position: absolute !important;
-      z-index: 20 !important;
-      display: flex !important;
-      visibility: visible !important;
-      opacity: 1 !important;
-      left: 50% !important;
-      bottom: max(12px, env(safe-area-inset-bottom)) !important;
-      transform: translateX(-50%) !important;
+      position: absolute;
+      z-index: 20;
+      left: 50%;
+      bottom: 10px;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: stretch;
       width: max-content;
       max-width: calc(100% - 20px);
-      gap: 7px;
-      padding: 7px;
+      gap: 6px;
+      padding: 6px;
       border: 1px solid #ffe1a070;
-      border-radius: 16px;
+      border-radius: 14px;
       background: linear-gradient(180deg, #253044f5, #101827fa);
       box-shadow: 0 8px 26px #000b, inset 0 1px #ffffff20;
       backdrop-filter: blur(8px);
@@ -78,18 +52,18 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 7px;
-      min-width: 112px;
-      min-height: 46px;
-      padding: 8px 12px;
+      gap: 6px;
+      min-width: 103px;
+      min-height: 43px;
+      padding: 7px 10px;
       border: 1px solid #ffffff1a;
-      border-radius: 11px;
+      border-radius: 10px;
       background: #ffffff0b;
-      color: #f5f2e8;
-      font: 700 14px/1 system-ui, sans-serif;
-      text-shadow: 0 1px 2px #000;
+      color: var(--text);
+      font: 700 13px/1 system-ui, sans-serif;
       cursor: pointer;
-      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      white-space: nowrap;
+      transition: transform .15s, background .15s, border-color .15s;
     }
     .menu-button:hover, .menu-button[aria-expanded="true"], .menu-button.active {
       transform: translateY(-2px);
@@ -97,59 +71,53 @@
       background: #ffd16626;
       color: #ffe29a;
     }
-    .menu-button:focus-visible, .panel-close:focus-visible { outline: 3px solid #ffd166; outline-offset: 2px; }
-    .menu-icon { font-size: 19px; line-height: 1; }
+    .menu-button:focus-visible, .panel-close:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+    .menu-icon { font-size: 18px; line-height: 1; }
     .menu-panel {
-      position: absolute !important;
-      z-index: 21 !important;
-      left: 50% !important;
-      bottom: 76px !important;
-      transform: translateX(-50%) !important;
+      position: absolute;
+      z-index: 21;
+      left: 50%;
+      bottom: 70px;
+      transform: translateX(-50%);
       width: min(360px, calc(100% - 24px));
       padding: 18px 20px;
       border: 1px solid #ffd166a6;
       border-radius: 15px;
-      background: var(--panel);
+      background: rgba(15, 23, 42, .97);
       box-shadow: 0 14px 36px #000c;
       backdrop-filter: blur(10px);
     }
-    .menu-panel[hidden] { display: none !important; }
+    .menu-panel[hidden] { display: none; }
     .menu-panel h2 { margin: 0 38px 13px 0; color: var(--gold); font-size: 19px; }
     .menu-panel p { margin: 8px 0; color: #f1eee5; font-size: 14px; line-height: 1.5; }
     .menu-panel .muted { color: #b7c1ce; }
-    .panel-close {
-      position: absolute; top: 10px; right: 10px; width: 31px; height: 31px;
-      border: 1px solid #ffffff35; border-radius: 9px; background: #ffffff10;
-      color: white; font-size: 20px; cursor: pointer;
+    .panel-close { position: absolute; top: 10px; right: 10px; width: 31px; height: 31px; border: 1px solid #ffffff35; border-radius: 9px; background: #ffffff10; color: white; font-size: 20px; cursor: pointer; }
+    @media (max-width: 620px) {
+      #gameWrap { width: 100vw; border-radius: 0; border-left: 0; border-right: 0; }
+      #gameMenu { width: calc(100% - 12px); max-width: none; gap: 3px; padding: 4px; bottom: max(7px, env(safe-area-inset-bottom)); }
+      .menu-button { flex: 1; min-width: 0; min-height: 39px; gap: 3px; padding: 5px 2px; font-size: clamp(9px, 2.8vw, 12px); }
+      .menu-icon { font-size: clamp(14px, 4vw, 17px); }
+      .menu-panel { bottom: 61px; }
     }
-    @media (max-width: 560px) {
-      #gameWrap { width: 100vw; height: min(100dvh, 562.5vw); border-radius: 0; border-left: 0; border-right: 0; }
-      #gameMenu { width: calc(100% - 16px); max-width: none; gap: 4px; padding: 5px; }
-      .menu-button { flex: 1; min-width: 0; min-height: 44px; padding: 7px 3px; gap: 4px; font-size: clamp(11px, 3vw, 13px); }
-      .menu-icon { font-size: 17px; }
-      .top-hint { top: 7px; font-size: 10px; padding: 6px 9px; }
-      .menu-panel { bottom: 65px !important; }
-    }
-    @media (max-height: 420px) and (min-width: 561px) {
-      .menu-button { min-height: 38px; }
-      #gameMenu { bottom: 6px !important; }
-      .top-hint { top: 5px; }
-      .menu-panel { bottom: 58px !important; }
+    @media (max-height: 390px) {
+      #gameMenu { bottom: 4px; }
+      .menu-button { min-height: 34px; }
+      .menu-panel { bottom: 52px; }
     }
   </style>
 </head>
 <body>
   <main id="gameWrap">
     <canvas id="game" width="960" height="540" aria-label="Jogo RPG 2D"></canvas>
-    <div class="top-hint">WASD / Setas: mover &nbsp;•&nbsp; Espaço: atacar &nbsp;•&nbsp; E: interagir</div>
 
     <nav id="gameMenu" aria-label="Menu do jogo">
       <button class="menu-button" type="button" data-panel="items" aria-expanded="false" aria-controls="menuPanel"><span class="menu-icon" aria-hidden="true">🎒</span><span>Itens</span></button>
       <button class="menu-button" type="button" data-panel="status" aria-expanded="false" aria-controls="menuPanel"><span class="menu-icon" aria-hidden="true">🛡️</span><span>Status</span></button>
       <button class="menu-button" type="button" data-panel="options" aria-expanded="false" aria-controls="menuPanel"><span class="menu-icon" aria-hidden="true">⚙️</span><span>Opções</span></button>
       <button class="menu-button" type="button" data-panel="talents" aria-expanded="false" aria-controls="menuPanel"><span class="menu-icon" aria-hidden="true">✨</span><span>Talentos</span></button>
-      <button id="autoHuntButton" class="menu-button" type="button" aria-expanded="false"><span class="menu-icon" aria-hidden="true">🎯</span><span>Caça Auto</span></button>
+      <button id="autoHuntButton" class="menu-button" type="button" aria-pressed="false"><span class="menu-icon" aria-hidden="true">🎯</span><span>Caça Auto</span></button>
     </nav>
+
     <section class="menu-panel" id="menuPanel" aria-live="polite" hidden>
       <button class="panel-close" type="button" aria-label="Fechar painel">×</button>
       <div id="panelContent"></div>
@@ -159,7 +127,7 @@
   <script>
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
-    const player = { x: 100, y: 120, size: 24, hp: 100, maxHp: 100, attack: 12, level: 1, xp: 0, attackCooldown: 0 };
+    const player = { x: 100, y: 120, size: 24, hp: 100, maxHp: 100, attack: 12, level: 1, xp: 0, toNext: 40, attackCooldown: 0 };
     const keys = Object.create(null);
     const items = ['Poção de vida'];
     let message = 'Explore a vila e encontre Mira!';
@@ -174,7 +142,7 @@
     let questComplete = false;
     let lastFrame = 0;
     let autoHunt = false;
-    let autoHuntButton = null;
+    let attackTimer = 0;
 
     function roundedRect(x, y, w, h, r, color) {
       ctx.fillStyle = color;
@@ -182,7 +150,6 @@
       ctx.roundRect(x, y, w, h, r);
       ctx.fill();
     }
-
     function drawTree(x, y, scale = 1) {
       ctx.fillStyle = '#172d23aa'; ctx.beginPath(); ctx.ellipse(x + 4, y + 22, 27 * scale, 10 * scale, 0, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#704629'; ctx.fillRect(x - 5 * scale, y, 10 * scale, 27 * scale);
@@ -190,7 +157,6 @@
       ctx.fillStyle = '#34764a'; ctx.beginPath(); ctx.arc(x - 8 * scale, y - 13 * scale, 15 * scale, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#579154'; ctx.beginPath(); ctx.arc(x + 8 * scale, y - 10 * scale, 11 * scale, 0, Math.PI * 2); ctx.fill();
     }
-
     function drawPerson(x, y, color, name, isPlayer = false) {
       ctx.fillStyle = '#13251bb0'; ctx.beginPath(); ctx.ellipse(x + 13, y + 29, 17, 7, 0, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#f2c99a'; ctx.beginPath(); ctx.arc(x + 13, y + 2, 8, 0, Math.PI * 2); ctx.fill();
@@ -204,7 +170,6 @@
         ctx.fillStyle = '#fff0c2'; ctx.fillText(name, x + 13, y - 15); ctx.textAlign = 'left';
       }
     }
-
     function drawSlime(enemy) {
       ctx.fillStyle = '#17332190'; ctx.beginPath(); ctx.ellipse(enemy.x, enemy.y + 13, 20, 7, 0, 0, Math.PI * 2); ctx.fill();
       const gradient = ctx.createLinearGradient(enemy.x - 15, enemy.y - 15, enemy.x + 12, enemy.y + 14);
@@ -214,7 +179,6 @@
       ctx.fillStyle = '#13231caa'; ctx.fillRect(enemy.x - 18, enemy.y - 23, 36, 5);
       ctx.fillStyle = '#ff6577'; ctx.fillRect(enemy.x - 17, enemy.y - 22, 34 * Math.max(0, enemy.hp) / enemy.maxHp, 3);
     }
-
     function draw() {
       const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
       bg.addColorStop(0, '#57915b'); bg.addColorStop(.55, '#3d8050'); bg.addColorStop(1, '#285b42');
@@ -249,96 +213,66 @@
       ctx.fillStyle = '#ffd166'; ctx.font = 'bold 13px system-ui'; ctx.fillText('✦  MISSÃO DE MIRA', canvas.width - 207, 39);
       ctx.fillStyle = '#f4efe4'; ctx.font = '12px system-ui';
       ctx.fillText(questComplete ? 'Recompensa recebida!' : questStarted ? `Cristais: ${crystals} / 3` : 'Encontre Mira na trilha', canvas.width - 207, 62);
-      if (enemies.length) { drawSlime(enemies[0]); }
-      for (let i = 1; i < enemies.length; i++) drawSlime(enemies[i]);
+      for (const enemy of enemies) drawSlime(enemy);
       drawPerson(npc.x - 13, npc.y - 13, '#6aa6db', 'Mira');
       drawPerson(player.x, player.y, '#c75e55', 'Herói', true);
       roundedRect(250, canvas.height - 70, 460, 28, 9, '#101a26df');
       ctx.fillStyle = '#fff0d4'; ctx.font = '13px system-ui'; ctx.textAlign = 'center'; ctx.fillText(message, 480, canvas.height - 51); ctx.textAlign = 'left';
       if (autoHunt) {
-        ctx.fillStyle = '#ffd166'; ctx.fillRect(700, canvas.height - 65, 120, 18);
-        ctx.fillStyle = '#101827'; ctx.font = 'bold 12px system-ui'; ctx.fillText('CAÇA ATIVA', 715, canvas.height - 51);
+        roundedRect(760, canvas.height - 67, 150, 25, 8, '#ffd166');
+        ctx.fillStyle = '#101827'; ctx.font = 'bold 12px system-ui'; ctx.fillText('🎯 CAÇA ATIVA', 780, canvas.height - 50);
       }
     }
-
     function getNearestEnemy() {
-      let target = null;
-      let nearestDistance = Infinity;
-
+      let target = null; let nearestDistance = Infinity;
       for (const enemy of enemies) {
         const d = Math.hypot(player.x - enemy.x, player.y - enemy.y);
-        if (d < nearestDistance) {
-          nearestDistance = d;
-          target = enemy;
-        }
+        if (d < nearestDistance) { nearestDistance = d; target = enemy; }
       }
       return target;
     }
-
-    function updateAutoHunt() {
-      if (!autoHunt) return;
+    function attack() {
+      if (player.attackCooldown > 0) return false;
       const target = getNearestEnemy();
-      if (!target) return;
-
-      const dx = target.x - player.x;
-      const dy = target.y - player.y;
-      const dist = Math.hypot(dx, dy);
-
-      if (dist > 28) {
-        const step = 180 * (1 / 60);
-        const moveX = (dx / dist) * step;
-        const moveY = (dy / dist) * step;
-        player.x += moveX;
-        player.y += moveY;
-      } else {
-        attack();
-      }
-
-      player.x = Math.max(5, Math.min(canvas.width - player.size - 5, player.x));
-      player.y = Math.max(90, Math.min(canvas.height - player.size - 82, player.y));
+      if (!target) { message = 'Não há inimigos na área.'; return false; }
+      const distance = Math.hypot(player.x - target.x, player.y - target.y);
+      if (distance > 42) return false;
+      player.attackCooldown = .45;
+      target.hp -= player.attack;
+      if (target.hp <= 0) {
+        enemies.splice(enemies.indexOf(target), 1);
+        player.xp += 15;
+        if (questStarted && crystals < 3) crystals++;
+        if (player.xp >= player.toNext) {
+          player.xp -= player.toNext; player.level++; player.attack += 4;
+          player.maxHp += 12; player.hp = player.maxHp; player.toNext = Math.floor(player.toNext * 1.5);
+        }
+        message = `Você derrotou o ${target.kind}! +15 XP`;
+      } else message = `Você acertou o ${target.kind}!`;
+      return true;
     }
-
     function update(timestamp) {
       const dt = Math.min((timestamp - (lastFrame || timestamp)) / 1000, .04); lastFrame = timestamp;
-      if (player.attackCooldown > 0) {
-        player.attackCooldown = Math.max(0, player.attackCooldown - dt);
-      }
-
+      player.attackCooldown = Math.max(0, player.attackCooldown - dt);
+      attackTimer -= dt;
       const speed = 190 * dt;
       if (!autoHunt) {
         if (keys.ArrowUp || keys.KeyW) player.y -= speed;
         if (keys.ArrowDown || keys.KeyS) player.y += speed;
         if (keys.ArrowLeft || keys.KeyA) player.x -= speed;
         if (keys.ArrowRight || keys.KeyD) player.x += speed;
+      } else {
+        const target = getNearestEnemy();
+        if (target) {
+          const dx = target.x - player.x; const dy = target.y - player.y; const dist = Math.hypot(dx, dy);
+          if (dist > 34) { player.x += dx / dist * 125 * dt; player.y += dy / dist * 125 * dt; }
+          else if (attackTimer <= 0) { attack(); attackTimer = .48; }
+        }
       }
-
-      if (autoHunt) {
-        updateAutoHunt();
-      }
-
-      player.x = Math.max(5, Math.min(canvas.width - player.size - 5, player.x));
-      player.y = Math.max(90, Math.min(canvas.height - player.size - 82, player.y));
+      player.x = Math.max(28, Math.min(canvas.width - player.size - 28, player.x));
+      player.y = Math.max(100, Math.min(canvas.height - player.size - 88, player.y));
       draw(); requestAnimationFrame(update);
     }
-
-    function attack() {
-      if (player.attackCooldown > 0) return;
-      const target = getNearestEnemy();
-      if (!target) { message = 'Nenhum inimigo próximo.'; return; }
-      if (Math.hypot(player.x - target.x, player.y - target.y) > 55 && !autoHunt) {
-        message = 'Você está muito longe para atacar.';
-        return;
-      }
-      player.attackCooldown = 0.45;
-      target.hp -= player.attack;
-      if (target.hp <= 0) {
-        enemies.splice(enemies.indexOf(target), 1); player.xp += 15;
-        if (questStarted && crystals < 3) crystals++;
-        if (player.xp >= 40) { player.xp -= 40; player.level++; player.attack += 4; player.maxHp += 12; player.hp = player.maxHp; }
-        message = `Você derrotou o ${target.kind}! +15 XP`;
-      } else message = `Você acertou o ${target.kind}!`;
-    }
-
     function interact() {
       if (Math.hypot(player.x - npc.x, player.y - npc.y) > 65) { message = 'Chegue mais perto de Mira para conversar.'; return; }
       if (!questStarted) { questStarted = true; message = 'Mira: Derrote 3 slimes para receber uma recompensa!'; }
@@ -349,36 +283,29 @@
 
     const menuPanel = document.getElementById('menuPanel');
     const panelContent = document.getElementById('panelContent');
-    const menuButtons = [...document.querySelectorAll('.menu-button')];
+    const menuButtons = [...document.querySelectorAll('.menu-button[data-panel]')];
+    const autoHuntButton = document.getElementById('autoHuntButton');
     const panelMarkup = {
       items: () => `<h2>🎒 Itens</h2><p>${items.map(item => `🎁 ${item}`).join('<br>')}</p><p>💎 Cristais da missão: ${crystals}</p>`,
-      status: () => `<h2>🛡️ Status</h2><p>Nível: ${player.level}</p><p>Vida: ${player.hp} / ${player.maxHp}</p><p>Ataque: ${player.attack}</p><p>Experiência: ${player.xp} / 40</p>`,
-      options: () => `<h2>⚙️ Opções</h2><p>Movimento: WASD ou setas</p><p>Ataque: Espaço • Interagir: E</p><p class="muted">Pressione Esc para fechar este painel.</p>`,
+      status: () => `<h2>🛡️ Status</h2><p>Nível: ${player.level}</p><p>Vida: ${player.hp} / ${player.maxHp}</p><p>Ataque: ${player.attack}</p><p>Experiência: ${player.xp} / ${player.toNext}</p>`,
+      options: () => `<h2>⚙️ Opções</h2><p>Use as setas ou WASD para andar.</p><p>Espaço: atacar • E: interagir com Mira.</p>`,
       talents: () => `<h2>✨ Talentos</h2><p>⭐ Nível do aventureiro: ${player.level}</p><p>⚔️ Poder de ataque: ${player.attack}</p><p class="muted">Derrote inimigos para ganhar experiência e subir de nível.</p>`
     };
-
-    function closePanel() {
-      menuPanel.hidden = true;
-      menuButtons.forEach(button => button.setAttribute('aria-expanded', 'false'));
-    }
-
+    function closePanel() { menuPanel.hidden = true; menuButtons.forEach(button => button.setAttribute('aria-expanded', 'false')); }
     menuButtons.forEach(button => button.addEventListener('click', () => {
-      if (button.id === 'autoHuntButton') {
-        autoHunt = !autoHunt;
-        button.classList.toggle('active', autoHunt);
-        button.setAttribute('aria-expanded', String(autoHunt));
-        message = autoHunt ? 'Caça automática ativada.' : 'Caça automática desativada.';
-        return;
-      }
       if (!menuPanel.hidden && button.getAttribute('aria-expanded') === 'true') { closePanel(); return; }
       menuButtons.forEach(item => item.setAttribute('aria-expanded', 'false'));
       button.setAttribute('aria-expanded', 'true');
       panelContent.innerHTML = panelMarkup[button.dataset.panel]();
       menuPanel.hidden = false;
     }));
-
+    autoHuntButton.addEventListener('click', () => {
+      autoHunt = !autoHunt;
+      autoHuntButton.classList.toggle('active', autoHunt);
+      autoHuntButton.setAttribute('aria-pressed', String(autoHunt));
+      message = autoHunt ? 'Caça automática ativada.' : 'Caça automática desativada.';
+    });
     document.querySelector('.panel-close').addEventListener('click', closePanel);
-
     document.addEventListener('keydown', event => {
       if (event.code === 'Escape') closePanel();
       if (event.code === 'Space') { event.preventDefault(); attack(); }
@@ -386,8 +313,6 @@
       keys[event.code] = true;
     });
     document.addEventListener('keyup', event => { keys[event.code] = false; });
-
-    autoHuntButton = document.getElementById('autoHuntButton');
     draw(); requestAnimationFrame(update);
   </script>
 </body>
